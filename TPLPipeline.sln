@@ -1,0 +1,42 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26228.4
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TPLPipeline", "TPLPipeline\TPLPipeline.csproj", "{A869F8B3-9D3B-4378-ABEC-2FE57DBD5348}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TPLPipeline.TestApp", "TPLPipeline.TestApp\TPLPipeline.TestApp.csproj", "{083FF25F-09EF-435E-A93A-F2616D509D27}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution items", "Solution items", "{785BBCBD-366F-4227-8993-F51FCDA12CEC}"
+	ProjectSection(SolutionItems) = preProject
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		LICENSE.md = LICENSE.md
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TPLPipeline.Tests", "TPLPipeline.Tests\TPLPipeline.Tests.csproj", "{77A46537-F4F2-43A1-99A1-21DEF07218FA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A869F8B3-9D3B-4378-ABEC-2FE57DBD5348}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A869F8B3-9D3B-4378-ABEC-2FE57DBD5348}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A869F8B3-9D3B-4378-ABEC-2FE57DBD5348}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A869F8B3-9D3B-4378-ABEC-2FE57DBD5348}.Release|Any CPU.Build.0 = Release|Any CPU
+		{083FF25F-09EF-435E-A93A-F2616D509D27}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{083FF25F-09EF-435E-A93A-F2616D509D27}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{083FF25F-09EF-435E-A93A-F2616D509D27}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{083FF25F-09EF-435E-A93A-F2616D509D27}.Release|Any CPU.Build.0 = Release|Any CPU
+		{77A46537-F4F2-43A1-99A1-21DEF07218FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{77A46537-F4F2-43A1-99A1-21DEF07218FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{77A46537-F4F2-43A1-99A1-21DEF07218FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{77A46537-F4F2-43A1-99A1-21DEF07218FA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
