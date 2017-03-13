@@ -11,10 +11,11 @@
 		void BeginStep();
 		void CompleteStep();
 
+		T GetData<T>();
+		void SetData<T>(T value);
+
 		void Disable();
 		bool Disabled { get; }
 
-		T GetData<T>();
-		void SetData<T>(T value);
 	}
 }
