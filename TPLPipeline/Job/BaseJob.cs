@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace TPLPipeLine
 {
-	public abstract class AbstractJob : IPipelineJob
+	public abstract class BaseJob : IPipelineJob
 	{
 		private List<IPipelineJobElement> JobElements = new List<IPipelineJobElement>();
 		private TaskCompletionSource<bool> CompletionTcs = new TaskCompletionSource<bool>();

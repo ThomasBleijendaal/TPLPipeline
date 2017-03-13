@@ -5,7 +5,7 @@ using System.Threading.Tasks.Dataflow;
 
 namespace TPLPipeLine
 {
-	public abstract class AbstractPipeline<Tjob> : IPipeline<Tjob> where Tjob : IPipelineJob
+	public abstract class BasePipeline<Tjob> : IPipeline<Tjob> where Tjob : IPipelineJob
 	{
 		public abstract void Post(Tjob job);
 		public abstract Task PostAsync(Tjob job);

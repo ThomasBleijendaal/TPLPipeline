@@ -61,10 +61,8 @@
   <ItemGroup>
     <Compile Include="Factory\PipelineBlockFactoryTests.cs" />
     <Compile Include="JobElment\JobElementTests.cs" />
-    <Compile Include="Job\AbstractJobTests.cs" />
     <Compile Include="Job\PipelineJobExtensionsTests.cs" />
     <Compile Include="Linker\PipelineBatchLinkerTests.cs" />
-    <Compile Include="Pipeline\AbstractPipelineTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

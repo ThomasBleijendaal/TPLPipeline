@@ -2,7 +2,7 @@
 
 namespace TPLPipeLine
 {
-	public class Job : AbstractJob
+	public class Job : BaseJob
 	{
 		public Job()
 		{

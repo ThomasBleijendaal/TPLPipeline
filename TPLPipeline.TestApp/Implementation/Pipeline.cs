@@ -6,7 +6,7 @@ using System.Threading.Tasks.Dataflow;
 
 namespace TPLPipeLine
 {
-	public class Pipeline : AbstractPipeline<Job>
+	public class Pipeline : BasePipeline<Job>
 	{
 		public HttpClient HttpClient { get; set; } = new HttpClient();
 
@@ -23,8 +23,6 @@ namespace TPLPipeLine
 				async (job, requestUri) =>
 				{
 					var data = await HttpClient.GetByteArrayAsync(requestUri);
-
-					//var data = new byte[] { 0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80, 0x90 };
 
 					if(data == null)
 					{
@@ -92,16 +90,6 @@ namespace TPLPipeLine
 		{
 			PipelineBegin.Post(job);
 			return job.Completion;
-		}
-	}
-
-	public class PipelineJobContext
-	{
-		public string TargetFile { get; set; }
-
-		public PipelineJobContext()
-		{
-			TargetFile = "data.txt";
 		}
 	}
 }
