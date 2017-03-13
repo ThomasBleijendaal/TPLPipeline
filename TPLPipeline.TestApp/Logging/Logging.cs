@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace TPLPipeLine
+namespace TPLPipeline.TestApp
 {
 
 	public class Logger

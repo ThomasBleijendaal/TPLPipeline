@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace TPLPipeLine
+namespace TPLPipeline
 {
 	public class JobElement : IPipelineJobElement
 	{

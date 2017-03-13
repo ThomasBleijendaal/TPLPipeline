@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace TPLPipeLine
+namespace TPLPipeline.TestApp
 {
 	public class Job : BaseJob
 	{

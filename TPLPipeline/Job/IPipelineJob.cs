@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace TPLPipeLine
+namespace TPLPipeline
 {
 	public interface IPipelineJob
 	{

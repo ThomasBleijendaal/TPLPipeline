@@ -4,7 +4,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
-namespace TPLPipeLine
+namespace TPLPipeline.TestApp
 {
 	public class Pipeline : BasePipeline<Job>
 	{

@@ -2,7 +2,7 @@
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TPLPipeLine
+namespace TPLPipeline
 {
 
 	public interface IPipeline<Tjob> where Tjob : IPipelineJob

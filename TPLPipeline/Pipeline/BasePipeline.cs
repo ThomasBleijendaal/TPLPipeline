@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
-namespace TPLPipeLine
+namespace TPLPipeline
 {
 	public abstract class BasePipeline<Tjob> : IPipeline<Tjob> where Tjob : IPipelineJob
 	{

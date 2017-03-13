@@ -1,12 +1,12 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using TPLPipeLine;
+using TPLPipeline;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TPLPipeLine.Tests
+namespace TPLPipeline.Tests
 {
 	[TestClass()]
 	public class PipelineBatchLinkerTests

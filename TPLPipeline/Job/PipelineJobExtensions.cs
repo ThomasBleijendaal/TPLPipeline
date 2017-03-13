@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace TPLPipeLine
+namespace TPLPipeline
 {
 	public static class PipelineJobExtensions
 	{

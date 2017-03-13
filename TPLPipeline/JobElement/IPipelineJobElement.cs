@@ -1,4 +1,4 @@
-﻿namespace TPLPipeLine
+﻿namespace TPLPipeline
 {
 	public interface IPipelineJobElement
 	{

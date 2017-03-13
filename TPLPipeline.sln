@@ -13,6 +13,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution items", "Solution 
 		.gitignore = .gitignore
 		LICENSE.md = LICENSE.md
 		README.md = README.md
+		TPLPipeline\TPLPipeline.nuspec = TPLPipeline\TPLPipeline.nuspec
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TPLPipeline.Tests", "TPLPipeline.Tests\TPLPipeline.Tests.csproj", "{77A46537-F4F2-43A1-99A1-21DEF07218FA}"

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace TPLPipeLine
+namespace TPLPipeline.TestApp
 {
 	public interface ILoggable
 	{

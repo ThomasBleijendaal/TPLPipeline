@@ -48,8 +48,8 @@
     <Compile Include="Pipeline\IPipeline.cs" />
     <Compile Include="Linker\IPipelineBatchLinker.cs" />
     <Compile Include="Job\IPipelineJob.cs" />
-    <Compile Include="JobElment\IPipelineJobElement.cs" />
-    <Compile Include="JobElment\JobElement.cs" />
+    <Compile Include="JobElement\IPipelineJobElement.cs" />
+    <Compile Include="JobElement\JobElement.cs" />
     <Compile Include="Linker\PipelineBatchLinker.cs" />
     <Compile Include="Factory\PipelineBlockFactory.cs" />
     <Compile Include="Job\PipelineJobExtensions.cs" />
