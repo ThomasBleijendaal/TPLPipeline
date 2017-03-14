@@ -10,16 +10,22 @@ namespace TPLPipeline
 		private List<IPipelineJobElement> JobElements = new List<IPipelineJobElement>();
 		private TaskCompletionSource<bool> CompletionTcs = new TaskCompletionSource<bool>();
 
+		private bool Merged { get; set; }
+
 		public Task<bool> Completion => CompletionTcs.Task;
-		public string Id => Guid.NewGuid().ToString();
+		public string Id { get; private set; }
 
 		bool IPipelineJob.IsFullyBegun(int stepNr) => !JobElements.Any(e => e.CurrentStep <= stepNr - 1);
 
 		bool IPipelineJob.IsCompleted(int stepNr) => !JobElements.Any(e => e.CompletedStep <= stepNr - 1);
-		bool IPipelineJob.IsMerged => JobElements.Any(e => e.Disabled);
-
+		
 		public abstract void OnJobStart();
 		public abstract void OnJobComplete();
+
+		public BaseJob()
+		{
+			Id = Guid.NewGuid().ToString();
+		}
 
 		void IPipelineJob.Complete()
 		{
@@ -34,9 +40,18 @@ namespace TPLPipeline
 
 		IEnumerable<IPipelineJobElement> IPipelineJob.MergeElements()
 		{
-			JobElements.GetRange(1, JobElements.Count - 1).ForEach(element => element.Disable());
+			// TODO: this code can suffer from races
+			if (!Merged)
+			{
+				Merged = true;
+				JobElements.GetRange(1, JobElements.Count - 1).ForEach(element => element.Disable());
 
-			return JobElements;
+				return JobElements;
+			}
+			else
+			{
+				return null;
+			}
 		}
 
 		IPipelineJobElement IPipelineJob.MergeToSingleElement()

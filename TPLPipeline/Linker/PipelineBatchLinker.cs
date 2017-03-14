@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
 namespace TPLPipeline
@@ -15,12 +16,16 @@ namespace TPLPipeline
 				{
 					var job = element.Job;
 
-					if (!job.IsMerged && job.IsCompleted(element.CurrentStep))
+					if (job.IsCompleted(element.CurrentStep))
 					{
 						Console.WriteLine($"Merging job {job.Id}");
 
 						var elements = job.MergeElements();
-						to.Post(elements);
+
+						if (elements != null)
+						{
+							to.Post(elements);
+						}
 					}
 				});
 

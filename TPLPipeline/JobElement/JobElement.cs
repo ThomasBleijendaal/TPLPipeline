@@ -19,6 +19,7 @@ namespace TPLPipeline
 			Job = job;
 			Element = element;
 
+
 			_Data.Add(initData);
 		}
 
@@ -36,6 +37,10 @@ namespace TPLPipeline
 
 		void IPipelineJobElement.SetData<T>(T value)
 		{
+			if(Disabled)
+			{
+				throw new Exception("Called SetData on disabled JobElement. This happens when JobElements are mutated after the job has been merged.");
+			}
 			_Data[CurrentStep] = value;
 		}
 
@@ -57,14 +62,5 @@ namespace TPLPipeline
 		{
 			Disabled = true;
 		}
-		
-		//// ILoggable
-		//public Dictionary<string, int[]> events { get; set; } = new Dictionary<string, int[]>();
-
-		//void ILoggable.AddEvent(int ms, int nr, string e)
-		//{
-		//	events.Add(e, new int[2] { ms, nr });
-		//}
-
 	}
 }

@@ -12,7 +12,6 @@ namespace TPLPipeline
 		bool IsCompleted(int stepNr);
 		bool IsFullyBegun(int stepNr);
 
-		bool IsMerged { get; }
 		IEnumerable<IPipelineJobElement> MergeElements();
 		IPipelineJobElement MergeToSingleElement();
 
