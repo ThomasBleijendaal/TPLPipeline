@@ -56,5 +56,11 @@
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TPLPipeline\TPLPipeline.csproj">
+      <Project>{a869f8b3-9d3b-4378-abec-2fe57dbd5348}</Project>
+      <Name>TPLPipeline</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

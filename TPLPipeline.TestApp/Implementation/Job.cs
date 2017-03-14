@@ -4,7 +4,7 @@ namespace TPLPipeline.TestApp
 {
 	public class Job : BaseJob
 	{
-		public Job()
+		public Job() : base()
 		{
 
 		}

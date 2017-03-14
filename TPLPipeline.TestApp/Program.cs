@@ -25,8 +25,6 @@ namespace TPLPipeline.TestApp
 				jobList.Add(new Job { Data = data });
 			}
 
-			//Logger.Start();
-
 			var tasks = new List<Task>();
 
 			foreach (var job in jobList)
