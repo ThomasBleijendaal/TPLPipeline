@@ -14,17 +14,19 @@ namespace TPLPipeline.TestApp
 		TransformBlock<IPipelineJobElement, IPipelineJobElement> DownloadBlock;
 		TransformBlock<IEnumerable<IPipelineJobElement>, IPipelineJobElement> MergeBlock;
 		ActionBlock<IPipelineJobElement> DiskWriteBlock;
-		
+		ActionBlock<IPipelineJobElement> ImageBlock;
+
+
 		public Pipeline()
 		{
 			PipelineBegin = PipelineBlockFactory.StartBlock();
 
-			DownloadBlock = TransformBlock<string, byte[]>(
-				async (job, requestUri) =>
+			DownloadBlock = TransformBlock<IJobElementStartData, byte[]>(
+				async (job, request) =>
 				{
-					var data = await HttpClient.GetByteArrayAsync(requestUri);
+					var data = await HttpClient.GetByteArrayAsync(request.Url);
 
-					if(data == null)
+					if (data == null)
 					{
 						;
 					}
@@ -62,12 +64,12 @@ namespace TPLPipeline.TestApp
 
 					var directory = Path.GetDirectoryName(file);
 
-					if(!Directory.Exists(directory))
+					if (!Directory.Exists(directory))
 					{
 						Directory.CreateDirectory(directory);
 					}
 
-					if(File.Exists(file))
+					if (File.Exists(file))
 					{
 						File.Delete(file);
 					}
@@ -77,8 +79,32 @@ namespace TPLPipeline.TestApp
 					fileHandle.Close();
 				}, true);
 
+			ImageBlock = ActionBlock<byte[]>(
+				(job, data) =>
+				{
+					var file = job.FileName + ".png";
+					var directory = Path.GetDirectoryName(file);
+
+					if (!Directory.Exists(directory))
+					{
+						Directory.CreateDirectory(directory);
+					}
+
+					if (File.Exists(file))
+					{
+						File.Delete(file);
+					}
+
+					var fileHandle = File.OpenWrite(file);
+					fileHandle.Write(data, 0, data.Length);
+					fileHandle.Close();
+				});
+
+
+
 			PipelineBegin.LinkTo(DownloadBlock);
-			DownloadBlock.LinkTo(MergeBlock);
+			DownloadBlock.LinkTo(MergeBlock, e => e.GetDataType(1) == typeof(Website));
+			DownloadBlock.LinkTo(ImageBlock, e => e.GetDataType(1) == typeof(Thumbnail));
 			MergeBlock.LinkTo(DiskWriteBlock);
 		}
 		public override void Post(Job job)

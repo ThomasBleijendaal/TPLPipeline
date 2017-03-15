@@ -15,10 +15,11 @@ namespace TPLPipeline
 		public Task<bool> Completion => CompletionTcs.Task;
 		public string Id { get; private set; }
 
-		bool IPipelineJob.IsFullyBegun(int stepNr) => !JobElements.Any(e => e.CurrentStep <= stepNr - 1);
+		bool IPipelineJob.IsFullyBegun(string stepName) => JobElements.All(e => e.CurrentStepName == stepName);
 
-		bool IPipelineJob.IsCompleted(int stepNr) => !JobElements.Any(e => e.CompletedStep <= stepNr - 1);
-		
+		bool IPipelineJob.IsCompleted(string stepName) => JobElements.All(e => e.CompletedStepName == stepName);
+		bool IPipelineJob.IsCompleted(string stepName, Predicate<IPipelineJobElement> predicate) => JobElements.Where(e => predicate(e)).All(e => e.CompletedStepName == stepName);
+
 		public abstract void OnJobStart();
 		public abstract void OnJobComplete();
 
@@ -40,13 +41,19 @@ namespace TPLPipeline
 
 		IEnumerable<IPipelineJobElement> IPipelineJob.MergeElements()
 		{
+			return ((IPipelineJob)this).MergeElements(e => true);
+		}
+		IEnumerable<IPipelineJobElement> IPipelineJob.MergeElements(Predicate<IPipelineJobElement> predicate)
+		{
 			// TODO: this code can suffer from races
 			if (!Merged)
 			{
 				Merged = true;
-				JobElements.GetRange(1, JobElements.Count - 1).ForEach(element => element.Disable());
+				var elements = JobElements.Where(e => predicate(e)).ToList();
+				
+				elements.GetRange(1, elements.Count - 1).ForEach(element => element.Disable());
 
-				return JobElements;
+				return elements;
 			}
 			else
 			{
@@ -60,16 +67,13 @@ namespace TPLPipeline
 			return JobElements.First();
 		}
 
-		public IEnumerable<object> Data
+		public void AddData(object value)
 		{
-			set
-			{
-				int i = 0;
-				foreach (var initData in value)
-				{
-					JobElements.Add(new JobElement(this, i++, initData));
-				}
-			}
+			JobElements.Add(new JobElement(this, JobElements.Count, value));
+		}
+		public void AddDataRange(IEnumerable<object> value)
+		{
+			JobElements.Add(new JobElement(this, JobElements.Count, value));
 		}
 
 	}

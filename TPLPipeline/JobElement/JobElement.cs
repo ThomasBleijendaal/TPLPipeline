@@ -8,54 +8,82 @@ namespace TPLPipeline
 		public IPipelineJob Job { get; private set; }
 		public int Element { get; private set; }
 
-		public int CurrentStep { get; private set; } = 0;
-		public int CompletedStep { get; private set; } = 0;
-		public bool Disabled { get; private set; } = false;
+		private Dictionary<string, object> Data = new Dictionary<string, object>();
+		private List<string> Steps = new List<string>();
 
-		private List<object> _Data = new List<object>();
+		private string _CurrentStepName;
+		public string CurrentStepName
+		{
+			get
+			{
+				return _CurrentStepName;
+			}
+			set
+			{
+				Data.Add(value, null);
+				Steps.Add(value);
+				_CurrentStepName = value;
+			}
+		}
+		
+		public string CompletedStepName { get; set; }
+
+		public bool Disabled { get; private set; } = false;
+		
 
 		public JobElement(IPipelineJob job, int element, object initData)
 		{
 			Job = job;
 			Element = element;
 
+			CurrentStepName = "init";
 
-			_Data.Add(initData);
+			((IPipelineJobElement)this).SetData(initData);
 		}
 
 		T IPipelineJobElement.GetData<T>()
 		{
-			if (_Data[CompletedStep] is T data)
+			if (Data[CurrentStepName] is T data)
 			{
 				return data;
 			}
 			else
 			{
-				throw new Exception($"Could not get correct type of data for this step. (Step {CompletedStep}, Requested type {typeof(T)}, Stored data type {_Data[CompletedStep].GetType()})");
+				throw new Exception($"Could not get correct type of data for this step. (Step {CompletedStepName}, Requested type {typeof(T)}, Stored data type {Data[CompletedStepName].GetType()})");
+			}
+		}
+
+		Type IPipelineJobElement.GetDataType(int stepsBack)
+		{
+			var step = Steps[Steps.Count - (stepsBack + 1)];
+
+			if(Data[step] == null)
+			{
+				return typeof(void);
+			}
+			else
+			{
+				return Data[step].GetType();
 			}
 		}
 
 		void IPipelineJobElement.SetData<T>(T value)
 		{
-			if(Disabled)
+			if (Disabled)
 			{
 				throw new Exception("Called SetData on disabled JobElement. This happens when JobElements are mutated after the job has been merged.");
 			}
-			_Data[CurrentStep] = value;
+			Data[CurrentStepName] = value;
 		}
 
-		void IPipelineJobElement.BeginStep()
+		void IPipelineJobElement.BeginStep(string stepName)
 		{
-			CurrentStep++;
-			_Data.Add(null);
+			CurrentStepName = stepName;
 		}
 
 		void IPipelineJobElement.CompleteStep()
 		{
-			if (CurrentStep > CompletedStep)
-			{
-				CompletedStep++;
-			}
+			CompletedStepName = CurrentStepName;
 		}
 
 		void IPipelineJobElement.Disable()

@@ -9,10 +9,12 @@ namespace TPLPipeline
 		string Id { get; }
 
 		void Complete();
-		bool IsCompleted(int stepNr);
-		bool IsFullyBegun(int stepNr);
+		bool IsCompleted(string stepName);
+		bool IsCompleted(string stepName, Predicate<IPipelineJobElement> predicate);
+		bool IsFullyBegun(string stepName);
 
 		IEnumerable<IPipelineJobElement> MergeElements();
+		IEnumerable<IPipelineJobElement> MergeElements(Predicate<IPipelineJobElement> predicate);
 		IPipelineJobElement MergeToSingleElement();
 
 		void OnJobStart();
@@ -20,8 +22,9 @@ namespace TPLPipeline
 
 		IEnumerable<IPipelineJobElement> Elements();
 
-		IEnumerable<object> Data { set; }
-		
+		void AddData(object data);
+		void AddDataRange(IEnumerable<object> data);
+
 		Task<bool> Completion { get; }
 	}
 }
