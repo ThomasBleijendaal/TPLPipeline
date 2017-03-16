@@ -19,6 +19,6 @@ namespace TPLPipeline.TestApp
 			Console.WriteLine("Job completed");
 		}
 
-		public string FileName => $"data\\{Id}.txt";
+		public string FileName => $"data\\{Id}\\{Guid.NewGuid()}.txt";
 	}
 }

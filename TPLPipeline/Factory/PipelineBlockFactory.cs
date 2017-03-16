@@ -85,7 +85,7 @@ namespace TPLPipeline
 						element.CompleteStep();
 					}
 
-					var newElement = job.MergeToSingleElement();
+					var newElement = job.MergeToSingleElement(elements);
 					newElement.SetData(newData);
 					return newElement;
 				}, options ?? new ExecutionDataflowBlockOptions());
@@ -114,7 +114,7 @@ namespace TPLPipeline
 						element.CompleteStep();
 					}
 
-					var newElement = job.MergeToSingleElement();
+					var newElement = job.MergeToSingleElement(elements);
 					newElement.SetData(newData);
 					return newElement;
 				}, options ?? new ExecutionDataflowBlockOptions());
@@ -137,7 +137,7 @@ namespace TPLPipeline
 
 					if(isLastStep && element.Job.IsCompleted(element.CurrentStepName))
 					{
-						element.Job.Complete();
+						element.Job.Complete(element.CurrentStepName);
 					}
 				}, options ?? new ExecutionDataflowBlockOptions());
 		}
@@ -159,7 +159,7 @@ namespace TPLPipeline
 
 					if (isLastStep && element.Job.IsCompleted(element.CurrentStepName))
 					{
-						element.Job.Complete();
+						element.Job.Complete(element.CurrentStepName);
 					}
 				}, options ?? new ExecutionDataflowBlockOptions());
 		}
@@ -191,7 +191,7 @@ namespace TPLPipeline
 
 					if (isLastStep && firstItem.Job.IsCompleted(firstItem.CurrentStepName))
 					{
-						firstItem.Job.Complete();
+						firstItem.Job.Complete(firstItem.CurrentStepName);
 					}
 				}, options ?? new ExecutionDataflowBlockOptions());
 		}
@@ -223,7 +223,7 @@ namespace TPLPipeline
 
 					if (isLastStep && firstItem.Job.IsCompleted(firstItem.CurrentStepName))
 					{
-						firstItem.Job.Complete();
+						firstItem.Job.Complete(firstItem.CurrentStepName);
 					}
 				}, options ?? new ExecutionDataflowBlockOptions());
 		}

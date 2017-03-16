@@ -8,14 +8,13 @@ namespace TPLPipeline
 	{
 		string Id { get; }
 
-		void Complete();
+		void Complete(string stepName);
 		bool IsCompleted(string stepName);
 		bool IsCompleted(string stepName, Predicate<IPipelineJobElement> predicate);
-		bool IsFullyBegun(string stepName);
-
+		
 		IEnumerable<IPipelineJobElement> MergeElements();
 		IEnumerable<IPipelineJobElement> MergeElements(Predicate<IPipelineJobElement> predicate);
-		IPipelineJobElement MergeToSingleElement();
+		IPipelineJobElement MergeToSingleElement(IEnumerable<IPipelineJobElement> elements);
 
 		void OnJobStart();
 		void OnJobComplete();

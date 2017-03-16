@@ -30,8 +30,6 @@ namespace TPLPipeline
 
 						if (elements != null)
 						{
-							Console.WriteLine($"Merging job {job.Id}");
-
 							to.Post(elements);
 						}
 					}

@@ -11,7 +11,7 @@ namespace TPLPipeline
 		private Dictionary<string, object> Data = new Dictionary<string, object>();
 		private List<string> Steps = new List<string>();
 
-		private string _CurrentStepName;
+		private string _CurrentStepName = "";
 		public string CurrentStepName
 		{
 			get
@@ -20,9 +20,12 @@ namespace TPLPipeline
 			}
 			set
 			{
-				Data.Add(value, null);
-				Steps.Add(value);
-				_CurrentStepName = value;
+				_CurrentStepName = $"{_CurrentStepName}_{value}";
+
+				Console.WriteLine($"{Element} {_CurrentStepName}");
+
+				Data.Add(_CurrentStepName, null);
+				Steps.Add(_CurrentStepName);
 			}
 		}
 		

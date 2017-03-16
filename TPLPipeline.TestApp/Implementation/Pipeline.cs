@@ -26,11 +26,6 @@ namespace TPLPipeline.TestApp
 				{
 					var data = await HttpClient.GetByteArrayAsync(request.Url);
 
-					if (data == null)
-					{
-						;
-					}
-
 					return data;
 				}, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 25 });
 
@@ -56,51 +51,18 @@ namespace TPLPipeline.TestApp
 
 					return mergedArray;
 				}, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 1 });
-
+			
 			DiskWriteBlock = ActionBlock<byte[]>(
 				(job, data) =>
 				{
-					var file = job.FileName;
-
-					var directory = Path.GetDirectoryName(file);
-
-					if (!Directory.Exists(directory))
-					{
-						Directory.CreateDirectory(directory);
-					}
-
-					if (File.Exists(file))
-					{
-						File.Delete(file);
-					}
-
-					var fileHandle = File.OpenWrite(file);
-					fileHandle.Write(data, 0, data.Length);
-					fileHandle.Close();
+					WriteToFile(job.FileName, data);
 				}, true);
 
 			ImageBlock = ActionBlock<byte[]>(
 				(job, data) =>
 				{
-					var file = job.FileName + ".png";
-					var directory = Path.GetDirectoryName(file);
-
-					if (!Directory.Exists(directory))
-					{
-						Directory.CreateDirectory(directory);
-					}
-
-					if (File.Exists(file))
-					{
-						File.Delete(file);
-					}
-
-					var fileHandle = File.OpenWrite(file);
-					fileHandle.Write(data, 0, data.Length);
-					fileHandle.Close();
-				});
-
-
+					WriteToFile(job.FileName + ".png", data);
+				}, true);
 
 			PipelineBegin.LinkTo(DownloadBlock);
 			DownloadBlock.LinkTo(MergeBlock, e => e.GetDataType(1) == typeof(Website));
@@ -116,6 +78,25 @@ namespace TPLPipeline.TestApp
 		{
 			PipelineBegin.Post(job);
 			return job.Completion;
+		}
+
+		private void WriteToFile(string fileName, byte[] data)
+		{
+			var directory = Path.GetDirectoryName(fileName);
+
+			if (!Directory.Exists(directory))
+			{
+				Directory.CreateDirectory(directory);
+			}
+
+			if (File.Exists(fileName))
+			{
+				File.Delete(fileName);
+			}
+
+			var fileHandle = File.OpenWrite(fileName);
+			fileHandle.Write(data, 0, data.Length);
+			fileHandle.Close();
 		}
 	}
 }
