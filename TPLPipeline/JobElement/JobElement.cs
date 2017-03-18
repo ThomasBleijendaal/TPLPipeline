@@ -8,8 +8,9 @@ namespace TPLPipeline
 		public IPipelineJob Job { get; private set; }
 		public int Element { get; private set; }
 
-		private Dictionary<string, object> Data = new Dictionary<string, object>();
+		private object Data;
 		private List<string> Steps = new List<string>();
+		private Dictionary<string, Type> StepTypes = new Dictionary<string, Type>();
 
 		private string _CurrentStepName = "";
 		public string CurrentStepName
@@ -24,7 +25,7 @@ namespace TPLPipeline
 
 				Console.WriteLine($"{Element} {_CurrentStepName}");
 
-				Data.Add(_CurrentStepName, null);
+				Data = null;
 				Steps.Add(_CurrentStepName);
 			}
 		}
@@ -46,13 +47,13 @@ namespace TPLPipeline
 
 		T IPipelineJobElement.GetData<T>()
 		{
-			if (Data[CurrentStepName] is T data)
+			if (Data is T data)
 			{
 				return data;
 			}
 			else
 			{
-				throw new Exception($"Could not get correct type of data for this step. (Step {CompletedStepName}, Requested type {typeof(T)}, Stored data type {Data[CompletedStepName].GetType()})");
+				throw new Exception($"Could not get correct type of data for this step. (Step {CompletedStepName}, Requested type {typeof(T)}, Stored data type {Data.GetType()})");
 			}
 		}
 
@@ -60,13 +61,13 @@ namespace TPLPipeline
 		{
 			var step = Steps[Steps.Count - (stepsBack + 1)];
 
-			if(Data[step] == null)
+			if(Data == null)
 			{
 				return typeof(void);
 			}
 			else
 			{
-				return Data[step].GetType();
+				return StepTypes[step];
 			}
 		}
 
@@ -76,7 +77,8 @@ namespace TPLPipeline
 			{
 				throw new Exception("Called SetData on disabled JobElement. This happens when JobElements are mutated after the job has been merged.");
 			}
-			Data[CurrentStepName] = value;
+			Data = value;
+			StepTypes[CurrentStepName] = value.GetType();
 		}
 
 		void IPipelineJobElement.BeginStep(string stepName)

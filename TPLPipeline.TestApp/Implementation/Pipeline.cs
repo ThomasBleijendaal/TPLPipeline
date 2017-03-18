@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -13,10 +14,11 @@ namespace TPLPipeline.TestApp
 		TransformManyBlock<IPipelineJob, IPipelineJobElement> PipelineBegin;
 		TransformBlock<IPipelineJobElement, IPipelineJobElement> DownloadBlock;
 		TransformBlock<IEnumerable<IPipelineJobElement>, IPipelineJobElement> MergeBlock;
-		ActionBlock<IPipelineJobElement> DiskWriteBlock;
-		ActionBlock<IPipelineJobElement> ImageBlock;
-
-
+		TransformBlock<IPipelineJobElement, IPipelineJobElement> DiskWriteBlock;
+		TransformBlock<IPipelineJobElement, IPipelineJobElement> ImageBlock;
+		ActionBlock<IPipelineJobElement> FinishBlock;
+		
+		
 		public Pipeline()
 		{
 			PipelineBegin = PipelineBlockFactory.StartBlock();
@@ -24,8 +26,10 @@ namespace TPLPipeline.TestApp
 			DownloadBlock = TransformBlock<IJobElementStartData, byte[]>(
 				async (job, request) =>
 				{
-					var data = await HttpClient.GetByteArrayAsync(request.Url);
+					await Task.Delay(1000);
 
+					var data = await HttpClient.GetByteArrayAsync(request.Url);
+					
 					return data;
 				}, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 25 });
 
@@ -50,24 +54,42 @@ namespace TPLPipeline.TestApp
 					}
 
 					return mergedArray;
-				}, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 1 });
+				}, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 5 });
 			
-			DiskWriteBlock = ActionBlock<byte[]>(
-				(job, data) =>
+			DiskWriteBlock = TransformBlock<byte[], bool>(
+				async (job, data) =>
 				{
-					WriteToFile(job.FileName, data);
-				}, true);
+					return await WriteToFile(job.FileName, data);
+				}, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 1 });
 
-			ImageBlock = ActionBlock<byte[]>(
-				(job, data) =>
+			ImageBlock = TransformBlock<byte[], bool>(
+				async (job, data) =>
 				{
-					WriteToFile(job.FileName + ".png", data);
+					return await WriteToFile(job.FileName + ".png", data);
+				}, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 1 });
+
+			FinishBlock = ActionBlock<Tuple<bool, bool>>(
+				(job, flags) =>
+				{
+					if(flags.Item1)
+					{
+						Console.WriteLine("File successfull");
+					}
+
+					if (flags.Item2)
+					{
+						Console.WriteLine("Image successfull");
+					}
 				}, true);
 
 			PipelineBegin.LinkTo(DownloadBlock);
+
 			DownloadBlock.LinkTo(MergeBlock, e => e.GetDataType(1) == typeof(Website));
 			DownloadBlock.LinkTo(ImageBlock, e => e.GetDataType(1) == typeof(Thumbnail));
+
 			MergeBlock.LinkTo(DiskWriteBlock);
+			
+			FinishBlock.LinkFrom<bool, bool>(DiskWriteBlock, ImageBlock);
 		}
 		public override void Post(Job job)
 		{
@@ -80,7 +102,7 @@ namespace TPLPipeline.TestApp
 			return job.Completion;
 		}
 
-		private void WriteToFile(string fileName, byte[] data)
+		private async Task<bool> WriteToFile(string fileName, byte[] data)
 		{
 			var directory = Path.GetDirectoryName(fileName);
 
@@ -95,8 +117,11 @@ namespace TPLPipeline.TestApp
 			}
 
 			var fileHandle = File.OpenWrite(fileName);
-			fileHandle.Write(data, 0, data.Length);
+			await fileHandle.WriteAsync(data, 0, data.Length);
+			await Task.Delay(1000);
 			fileHandle.Close();
+
+			return true;
 		}
 	}
 }

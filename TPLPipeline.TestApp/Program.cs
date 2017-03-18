@@ -17,11 +17,11 @@ namespace TPLPipeline.TestApp
 
 			var pipeline = new Pipeline();
 
-			for (int l = 0; l < 2; l++)
+			for (int l = 0; l < 4; l++)
 			{
 				var job = new Job();
 
-				for (int i = 0; i < 10; i++)
+				for (int i = 0; i < 2; i++)
 				{
 					job.AddData(new Website { Url = "http://thomas-ict.nl" });
 				}
@@ -44,7 +44,7 @@ namespace TPLPipeline.TestApp
 			{
 				foreach (var el in ((IPipelineJob)job).Elements())
 				{
-					Console.WriteLine($"TRACE: {el.CompletedStepName} {(el.Disabled ? "MERGED" : "COMPLETED")}");
+					Console.WriteLine($"TRACE: {el.Job.Id} {el.CompletedStepName} {(el.Disabled ? "MERGED" : "COMPLETED")}");
 				}
 			}
 

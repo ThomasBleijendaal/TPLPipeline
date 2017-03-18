@@ -14,7 +14,7 @@ namespace TPLPipeline
 
 		public PipelineBatchLinker(ISourceBlock<IPipelineJobElement> from, ITargetBlock<IEnumerable<IPipelineJobElement>> to, Predicate<IPipelineJobElement> predicate)
 		{
-			if(predicate == null)
+			if (predicate == null)
 			{
 				predicate = e => true;
 			}
@@ -25,7 +25,7 @@ namespace TPLPipeline
 					var job = element.Job;
 
 					if (job.IsCompleted(element.CurrentStepName, predicate))
-					{						
+					{
 						var elements = job.MergeElements(predicate);
 
 						if (elements != null)

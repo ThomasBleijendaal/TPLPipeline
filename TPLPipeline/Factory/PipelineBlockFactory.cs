@@ -237,5 +237,15 @@ namespace TPLPipeline
 		{
 			new PipelineBatchLinker(element, target, predicate);
 		}
+
+		public static void LinkFrom<T1, T2>(this ITargetBlock<IPipelineJobElement> element, ISourceBlock<IPipelineJobElement> from1, ISourceBlock<IPipelineJobElement> from2)
+		{
+			new PipelineMergeLinker<T1, T2>(from1, from2, element);
+		}
+
+		public static void LinkFrom<T1, T2>(this ITargetBlock<IPipelineJobElement> element, ISourceBlock<IPipelineJobElement> from1, ISourceBlock<IPipelineJobElement> from2, Predicate<IPipelineJobElement> predicate1, Predicate<IPipelineJobElement> predicate2)
+		{
+			new PipelineMergeLinker<T1, T2>(from1, from2, element, predicate1, predicate2);
+		}
 	}
 }

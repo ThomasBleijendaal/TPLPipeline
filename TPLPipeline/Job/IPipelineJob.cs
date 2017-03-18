@@ -15,6 +15,7 @@ namespace TPLPipeline
 		IEnumerable<IPipelineJobElement> MergeElements();
 		IEnumerable<IPipelineJobElement> MergeElements(Predicate<IPipelineJobElement> predicate);
 		IPipelineJobElement MergeToSingleElement(IEnumerable<IPipelineJobElement> elements);
+		IPipelineJobElement MergeToSingleElement<T1, T2>(Tuple<IPipelineJobElement, IPipelineJobElement> elements);
 
 		void OnJobStart();
 		void OnJobComplete();

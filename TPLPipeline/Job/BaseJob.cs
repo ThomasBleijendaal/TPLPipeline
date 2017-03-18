@@ -9,8 +9,7 @@ namespace TPLPipeline
 	{
 		private List<IPipelineJobElement> _Elements = new List<IPipelineJobElement>();
 		private TaskCompletionSource<bool> CompletionTcs = new TaskCompletionSource<bool>();
-		private int CompletedElements = 0;
-
+		
 		private object MergeLock { get; set; } = new object();
 		private bool Merged { get; set; }
 
@@ -40,9 +39,7 @@ namespace TPLPipeline
 
 		void IPipelineJob.Complete(string stepName)
 		{
-			CompletedElements += _Elements.Count(e => !e.Disabled && (e.CompletedStepName?.EndsWith(stepName) ?? false));
-
-			if (CompletedElements == _Elements.Count())
+			if (_Elements.TrueForAll(e => e.Disabled || (e.CompletedStepName?.EndsWith(stepName) ?? false)))
 			{
 				CompletionTcs.TrySetResult(true);
 				OnJobComplete();
@@ -84,11 +81,19 @@ namespace TPLPipeline
 
 			foreach (var element in elementList.GetRange(1, elementList.Count - 1))
 			{
-				CompletedElements++;
-
 				element.Disable();
 			}
 			return elementList.First();
+		}
+
+		IPipelineJobElement IPipelineJob.MergeToSingleElement<T1, T2>(Tuple<IPipelineJobElement, IPipelineJobElement> elements)
+		{
+			var newData = Tuple.Create(elements.Item1.GetData<T1>(), elements.Item2.GetData<T2>());
+
+			elements.Item1.SetData(newData);
+			elements.Item2.Disable();
+
+			return elements.Item1;
 		}
 
 		public void AddData(object value)
