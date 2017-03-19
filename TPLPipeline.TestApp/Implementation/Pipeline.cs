@@ -23,7 +23,7 @@ namespace TPLPipeline.TestApp
 		
 		public Pipeline()
 		{
-			PipelineBegin = PipelineBlockFactory.StartBlock<Job, string>();
+			PipelineBegin = StartBlock<string>();
 
 			DownloadBlock = TransformBlock<string, byte[]>(
 				async (job, request) =>
@@ -93,7 +93,7 @@ namespace TPLPipeline.TestApp
 
 			MergeBlock.LinkTo(DiskWriteBlock);
 			
-			FinishBlock.LinkFrom<bool, bool>(DiskWriteBlock, ImageBlock);
+			FinishBlock.LinkFrom(DiskWriteBlock, ImageBlock);
 		}
 		public override void Post(Job job)
 		{

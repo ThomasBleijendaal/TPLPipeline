@@ -28,31 +28,31 @@ A TPL Dataflow based pipeline with job based tracking.
 ```
 public class Pipeline : BasePipeline<Job>
 {
-  TransformManyBlock<IPipelineJob, IPipelineJobElement> PipelineBegin;
-  TransformBlock<IPipelineJobElement, IPipelineJobElement> DownloadBlock;
-  TransformBlock<IEnumerable<IPipelineJobElement>, IPipelineJobElement> MergeBlock;
-  TransformBlock<IPipelineJobElement, IPipelineJobElement> DiskWriteBlock;
-  TransformBlock<IPipelineJobElement, IPipelineJobElement> ImageBlock;
-  ActionBlock<IPipelineJobElement> FinishBlock;
+  TransformManyBlock<Job, IPipelineJobElement<string>> PipelineBegin;
+  TransformBlock<IPipelineJobElement<string>, IPipelineJobElement<byte[]>> DownloadBlock;
+  TransformBlock<IEnumerable<IPipelineJobElement<byte[]>>, IPipelineJobElement<byte[]>> MergeBlock;
+  TransformBlock<IPipelineJobElement<byte[]>, IPipelineJobElement<bool>> DiskWriteBlock;
+  TransformBlock<IPipelineJobElement<byte[]>, IPipelineJobElement<bool>> ImageBlock;
+  ActionBlock<IPipelineJobElement<Tuple<bool,bool>>> FinishBlock;
   
   public Pipeline()
   {
-    PipelineBegin = PipelineBlockFactory.StartBlock();
+  public Pipeline()
+  {
+    PipelineBegin = StartBlock<string>();
 
-    DownloadBlock = TransformBlock<IJobElementStartData, byte[]>(
+    DownloadBlock = TransformBlock<string, byte[]>(
       async (job, request) =>
       {
         [..]
-
       }, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 25 });
 
     MergeBlock = MergeTransformBlock<byte[], byte[]>(
       (job, byteArrays) =>
       {
         [..]
-
       }, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 5 });
-      
+
     DiskWriteBlock = TransformBlock<byte[], bool>(
       async (job, data) =>
       {
@@ -73,12 +73,13 @@ public class Pipeline : BasePipeline<Job>
 
     PipelineBegin.LinkTo(DownloadBlock);
 
-    DownloadBlock.LinkTo(MergeBlock, e => e.GetDataType(1) == typeof(Website));
-    DownloadBlock.LinkTo(ImageBlock, e => e.GetDataType(1) == typeof(Thumbnail));
+    DownloadBlock.LinkTo(MergeBlock, e => e.Properties["Type"] == "Website");
+    DownloadBlock.LinkTo(ImageBlock, e => e.Properties["Type"] == "Thumbnail");
 
     MergeBlock.LinkTo(DiskWriteBlock);
       
-    FinishBlock.LinkFrom<bool, bool>(DiskWriteBlock, ImageBlock);
+    FinishBlock.LinkFrom(DiskWriteBlock, ImageBlock);
+    
   }
 }
 ```
@@ -94,12 +95,12 @@ public class Job : BaseJob
 
   public override void OnJobStart()
   {
-    Console.WriteLine("Job started");
+  Console.WriteLine("Job started");
   }
 
   public override void OnJobComplete()
   {
-    Console.WriteLine("Job completed");
+  Console.WriteLine("Job completed");
   }
 }
 ```
