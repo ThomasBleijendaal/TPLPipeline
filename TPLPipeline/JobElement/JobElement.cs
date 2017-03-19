@@ -3,14 +3,15 @@ using System.Collections.Generic;
 
 namespace TPLPipeline
 {
-	public class JobElement : IPipelineJobElement
+	public class JobElement<T> : IPipelineJobElement<T>
 	{
 		public IPipelineJob Job { get; private set; }
-		public int Element { get; private set; }
+		public int Nr { get; private set; }
 
-		private object Data;
-		private List<string> Steps = new List<string>();
-		private Dictionary<string, Type> StepTypes = new Dictionary<string, Type>();
+		public T Data;
+		public List<string> Steps { get; private set; } = new List<string>();
+
+		public Dictionary<string, string> Properties { get; private set; } = new Dictionary<string, string>();
 
 		private string _CurrentStepName = "";
 		public string CurrentStepName
@@ -23,77 +24,81 @@ namespace TPLPipeline
 			{
 				_CurrentStepName = $"{_CurrentStepName}_{value}";
 
-				Console.WriteLine($"{Element} {_CurrentStepName}");
+				Console.WriteLine($"{Nr} {_CurrentStepName}");
 
-				Data = null;
+				Data = default(T);
 				Steps.Add(_CurrentStepName);
 			}
 		}
-		
+
 		public string CompletedStepName { get; set; }
 
 		public bool Disabled { get; private set; } = false;
-		
 
-		public JobElement(IPipelineJob job, int element, object initData)
+
+		public JobElement(IPipelineJob job, int element, T initData, DataProperty[] properties)
 		{
 			Job = job;
-			Element = element;
+			Nr = element;
 
 			CurrentStepName = "init";
 
-			((IPipelineJobElement)this).SetData(initData);
+			if(properties != null)
+			{
+				foreach(var property in properties)
+				{
+					Properties.Add(property.Name, property.Value);
+				}
+			}
+
+			Data = initData;
 		}
 
-		T IPipelineJobElement.GetData<T>()
+		public JobElement(IJobElement element, T newData)
 		{
-			if (Data is T data)
-			{
-				return data;
-			}
-			else
-			{
-				throw new Exception($"Could not get correct type of data for this step. (Step {CompletedStepName}, Requested type {typeof(T)}, Stored data type {Data.GetType()})");
-			}
+			Job = element.Job;
+			Nr = element.Nr;
+
+			_CurrentStepName = element.CurrentStepName;
+			CompletedStepName = element.CompletedStepName;
+			Properties = element.Properties;
+
+			Steps = element.Steps;
+
+			Data = newData;
+
+			Job.UpdateElement(this);
 		}
 
-		Type IPipelineJobElement.GetDataType(int stepsBack)
+		public T GetData()
 		{
-			var step = Steps[Steps.Count - (stepsBack + 1)];
-
-			if(Data == null)
-			{
-				return typeof(void);
-			}
-			else
-			{
-				return StepTypes[step];
-			}
+			return Data;
 		}
 
-		void IPipelineJobElement.SetData<T>(T value)
+		public IPipelineJobElement<Tnew> SetData<Tnew>(Tnew value)
 		{
 			if (Disabled)
 			{
 				throw new Exception("Called SetData on disabled JobElement. This happens when JobElements are mutated after the job has been merged.");
 			}
-			Data = value;
-			StepTypes[CurrentStepName] = value.GetType();
+
+			return new JobElement<Tnew>(this, value);
 		}
 
-		void IPipelineJobElement.BeginStep(string stepName)
+		public void BeginStep(string stepName)
 		{
 			CurrentStepName = stepName;
 		}
 
-		void IPipelineJobElement.CompleteStep()
+		public void CompleteStep()
 		{
 			CompletedStepName = CurrentStepName;
 		}
 
-		void IPipelineJobElement.Disable()
+		public void Disable()
 		{
 			Disabled = true;
 		}
 	}
+
 }

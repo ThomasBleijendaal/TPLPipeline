@@ -5,21 +5,22 @@ namespace TPLPipeline
 {
 	public static class PipelineJobExtensions
 	{
-		public static IEnumerable<T> GetData<T>(this IEnumerable<IPipelineJobElement> items)
+		public static IEnumerable<T> GetData<T>(this IEnumerable<IPipelineJobElement<T>> items)
 		{
 			var result = new List<T>();
 
 			foreach (var item in items)
 			{
-				result.Add(item.GetData<T>());
+				result.Add(item.GetData());
 			}
 
 			return result;
 		}
 
-		public static T GetJob<T>(this IEnumerable<IPipelineJobElement> items) where T: IPipelineJob
+		public static Tjob GetJob<Tjob>(this IEnumerable<IJobElement> items)
+			where Tjob : IPipelineJob
 		{
-			return (T)items.First()?.Job;
+			return (Tjob)items.First().Job;
 		}
 	}
 }

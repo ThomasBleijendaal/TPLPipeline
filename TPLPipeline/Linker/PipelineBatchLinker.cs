@@ -6,27 +6,27 @@ using System.Threading.Tasks.Dataflow;
 
 namespace TPLPipeline
 {
-	public class PipelineBatchLinker
+	public class PipelineBatchLinker<T>
 	{
-		private ActionBlock<IPipelineJobElement> Input { get; set; }
+		private ActionBlock<IJobElement> Input { get; set; }
 
-		public PipelineBatchLinker(ISourceBlock<IPipelineJobElement> from, ITargetBlock<IEnumerable<IPipelineJobElement>> to) : this(from, to, null) { }
+		public PipelineBatchLinker(ISourceBlock<IPipelineJobElement<T>> from, ITargetBlock<IEnumerable<IPipelineJobElement<T>>> to) : this(from, to, null) { }
 
-		public PipelineBatchLinker(ISourceBlock<IPipelineJobElement> from, ITargetBlock<IEnumerable<IPipelineJobElement>> to, Predicate<IPipelineJobElement> predicate)
+		public PipelineBatchLinker(ISourceBlock<IPipelineJobElement<T>> from, ITargetBlock<IEnumerable<IPipelineJobElement<T>>> to, Predicate<IPipelineJobElement<T>> predicate)
 		{
 			if (predicate == null)
 			{
 				predicate = e => true;
 			}
 
-			Input = new ActionBlock<IPipelineJobElement>(
+			Input = new ActionBlock<IJobElement>(
 				element =>
 				{
 					var job = element.Job;
 
-					if (job.IsCompleted(element.CurrentStepName, predicate))
+					if (job.IsCompleted<T>(element.CurrentStepName, predicate))
 					{
-						var elements = job.MergeElements(predicate);
+						var elements = job.MergeElements<T>(predicate);
 
 						if (elements != null)
 						{

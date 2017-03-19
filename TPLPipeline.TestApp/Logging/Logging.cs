@@ -14,7 +14,7 @@ namespace TPLPipeline.TestApp
 			begin = DateTime.Now;
 		}
 
-		public static void Log(IEnumerable<IPipelineJobElement> items, string action)
+		public static void Log(IEnumerable<IJobElement> items, string action)
 		{
 			foreach (var item in items)
 			{
@@ -22,7 +22,7 @@ namespace TPLPipeline.TestApp
 			}
 		}
 
-		public static void Log(IPipelineJobElement item, string action)
+		public static void Log(IJobElement item, string action)
 		{
 			//Console.WriteLine($"{item.Job.Id} :: {action} {item.Element}.");
 

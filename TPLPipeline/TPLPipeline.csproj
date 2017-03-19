@@ -43,11 +43,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="JobElement\DataProperty.cs" />
     <Compile Include="Job\BaseJob.cs" />
     <Compile Include="Linker\PipelineMergeLinker.cs" />
     <Compile Include="Pipeline\BasePipeline.cs" />
     <Compile Include="Pipeline\IPipeline.cs" />
-    <Compile Include="Linker\IPipelineBatchLinker.cs" />
     <Compile Include="Job\IPipelineJob.cs" />
     <Compile Include="JobElement\IPipelineJobElement.cs" />
     <Compile Include="JobElement\JobElement.cs" />

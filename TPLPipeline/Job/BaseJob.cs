@@ -7,26 +7,26 @@ namespace TPLPipeline
 {
 	public abstract class BaseJob : IPipelineJob
 	{
-		private List<IPipelineJobElement> _Elements = new List<IPipelineJobElement>();
+		private List<IJobElement> Elements = new List<IJobElement>();
 		private TaskCompletionSource<bool> CompletionTcs = new TaskCompletionSource<bool>();
-		
+
 		private object MergeLock { get; set; } = new object();
 		private bool Merged { get; set; }
 
 		public Task<bool> Completion => CompletionTcs.Task;
 		public string Id { get; private set; }
 
-		bool IPipelineJob.IsCompleted(string stepName)
+		bool IPipelineJob.IsCompleted<T>(string stepName)
 		{
-			return _Elements
-				.Where(e => !e.Disabled && (e.CurrentStepName?.EndsWith(stepName) ?? false))
-				.All(e => e.CompletedStepName?.EndsWith(stepName) ?? false);
+			return Elements
+				?.Where(e => !e.Disabled && (e.CurrentStepName?.EndsWith(stepName) ?? false))
+				.All(e => e.CompletedStepName?.EndsWith(stepName) ?? false) ?? false;
 		}
-		bool IPipelineJob.IsCompleted(string stepName, Predicate<IPipelineJobElement> predicate)
+		bool IPipelineJob.IsCompleted<T>(string stepName, Predicate<IPipelineJobElement<T>> predicate)
 		{
-			return _Elements
-				.Where(e => predicate(e) && !e.Disabled && (e.CurrentStepName?.EndsWith(stepName) ?? false))
-				.All(e => e.CompletedStepName?.EndsWith(stepName) ?? false);
+			return ((IPipelineJob)this).Elements<T>()
+				?.Where(e => predicate(e) && !e.Disabled && (e.CurrentStepName?.EndsWith(stepName) ?? false))
+				.All(e => e.CompletedStepName?.EndsWith(stepName) ?? false) ?? false;
 		}
 
 		public abstract void OnJobStart();
@@ -39,30 +39,45 @@ namespace TPLPipeline
 
 		void IPipelineJob.Complete(string stepName)
 		{
-			if (_Elements.TrueForAll(e => e.Disabled || (e.CompletedStepName?.EndsWith(stepName) ?? false)))
+			if (Elements.TrueForAll(e => e.Disabled || (e.CompletedStepName?.EndsWith(stepName) ?? false)))
 			{
 				CompletionTcs.TrySetResult(true);
 				OnJobComplete();
 			}
 		}
 
-		IEnumerable<IPipelineJobElement> IPipelineJob.Elements()
+		IEnumerable<IJobElement> IPipelineJob.Elements()
 		{
-			return _Elements;
+			return Elements;
 		}
 
-		IEnumerable<IPipelineJobElement> IPipelineJob.MergeElements()
+		IEnumerable<IPipelineJobElement<T>> IPipelineJob.Elements<T>()
 		{
-			return ((IPipelineJob)this).MergeElements(e => true);
+			if (Elements.TrueForAll(x => x as IPipelineJobElement<T> != null)) {
+				return Elements.Select(x => x as IPipelineJobElement<T>);
+			} else
+			{
+				return null;
+			}
 		}
-		IEnumerable<IPipelineJobElement> IPipelineJob.MergeElements(Predicate<IPipelineJobElement> predicate)
+
+		void IPipelineJob.UpdateElement(IJobElement newElement)
+		{
+			Elements[newElement.Nr] = newElement;
+		}
+
+		IEnumerable<IPipelineJobElement<T>> IPipelineJob.MergeElements<T>()
+		{
+			return (this as IPipelineJob).MergeElements<T>(e => true);
+		}
+		IEnumerable<IPipelineJobElement<T>> IPipelineJob.MergeElements<T>(Predicate<IPipelineJobElement<T>> predicate)
 		{
 			lock (MergeLock)
 			{
 				if (!Merged)
 				{
 					Merged = true;
-					var elements = _Elements.Where(e => predicate(e)).ToList();
+					var elements = Elements.Select(x => (IPipelineJobElement<T>)x).Where(e => predicate(e)).ToList();
 
 					elements.GetRange(1, elements.Count - 1).ForEach(element => element.Disable());
 
@@ -75,7 +90,7 @@ namespace TPLPipeline
 			}
 		}
 
-		IPipelineJobElement IPipelineJob.MergeToSingleElement(IEnumerable<IPipelineJobElement> elements)
+		IPipelineJobElement<T> IPipelineJob.MergeToSingleElement<T>(IEnumerable<IPipelineJobElement<T>> elements)
 		{
 			var elementList = elements.ToList();
 
@@ -86,23 +101,19 @@ namespace TPLPipeline
 			return elementList.First();
 		}
 
-		IPipelineJobElement IPipelineJob.MergeToSingleElement<T1, T2>(Tuple<IPipelineJobElement, IPipelineJobElement> elements)
+		IPipelineJobElement<Tuple<T1, T2>> IPipelineJob.MergeToSingleElement<T1, T2>(Tuple<IPipelineJobElement<T1>, IPipelineJobElement<T2>> elements)
 		{
-			var newData = Tuple.Create(elements.Item1.GetData<T1>(), elements.Item2.GetData<T2>());
+			var newData = Tuple.Create(elements.Item1.GetData(), elements.Item2.GetData());
 
-			elements.Item1.SetData(newData);
 			elements.Item2.Disable();
+			var mergedElement = elements.Item1.SetData(newData);
 
-			return elements.Item1;
+			return mergedElement;
 		}
 
-		public void AddData(object value)
+		public void AddData<T>(T value, DataProperty[] properties = null)
 		{
-			_Elements.Add(new JobElement(this, _Elements.Count, value));
-		}
-		public void AddDataRange(IEnumerable<object> value)
-		{
-			_Elements.Add(new JobElement(this, _Elements.Count, value));
+			Elements.Add(new JobElement<T>(this, Elements.Count, value, properties));
 		}
 
 	}

@@ -4,10 +4,6 @@ using System.Threading.Tasks;
 
 namespace TPLPipeline.TestApp
 {
-	public interface IJobElementStartData { string Url { get; } }
-	struct Website : IJobElementStartData { public string Url { get; set; } };
-	struct Thumbnail : IJobElementStartData { public string Url { get; set; } };
-
 	class Program
 	{
 		static void Main(string[] args)
@@ -17,16 +13,16 @@ namespace TPLPipeline.TestApp
 
 			var pipeline = new Pipeline();
 
-			for (int l = 0; l < 4; l++)
+			for (int l = 0; l < 1; l++)
 			{
 				var job = new Job();
 
-				for (int i = 0; i < 2; i++)
+				for (int i = 0; i < 5; i++)
 				{
-					job.AddData(new Website { Url = "http://thomas-ict.nl" });
+					job.AddData("http://thomas-ict.nl", new DataProperty[] { new DataProperty { Name = "Type", Value = "Website" } } );
 				}
 				
-				job.AddData(new Thumbnail { Url = "http://thomas-ict.nl/logo-groot.png" });
+				job.AddData("http://thomas-ict.nl/logo-groot.png", new DataProperty[] { new DataProperty { Name = "Type", Value = "Thumbnail" } });
 
 				jobList.Add(job);
 			}

@@ -5,11 +5,11 @@ namespace TPLPipeline
 {
 	public class PipelineMergeLinker<T1, T2>
 	{
-		private JoinBlock<IPipelineJobElement, IPipelineJobElement> Input { get; set; }
-		private ActionBlock<Tuple<IPipelineJobElement, IPipelineJobElement>> Output { get; set; }
+		private JoinBlock<IPipelineJobElement<T1>, IPipelineJobElement<T2>> Input { get; set; }
+		private ActionBlock<Tuple<IPipelineJobElement<T1>, IPipelineJobElement<T2>>> Output { get; set; }
 
-		public PipelineMergeLinker(ISourceBlock<IPipelineJobElement> from1, ISourceBlock<IPipelineJobElement> from2, ITargetBlock<IPipelineJobElement> to) : this(from1, from2, to, null, null) { }
-		public PipelineMergeLinker(ISourceBlock<IPipelineJobElement> from1, ISourceBlock<IPipelineJobElement> from2, ITargetBlock<IPipelineJobElement> to, Predicate<IPipelineJobElement> predicate1, Predicate<IPipelineJobElement> predicate2)
+		public PipelineMergeLinker(ISourceBlock<IPipelineJobElement<T1>> from1, ISourceBlock<IPipelineJobElement<T2>> from2, ITargetBlock<IPipelineJobElement<Tuple<T1,T2>>> to) : this(from1, from2, to, null, null) { }
+		public PipelineMergeLinker(ISourceBlock<IPipelineJobElement<T1>> from1, ISourceBlock<IPipelineJobElement<T2>> from2, ITargetBlock<IPipelineJobElement<Tuple<T1,T2>>> to, Predicate<IPipelineJobElement<T1>> predicate1, Predicate<IPipelineJobElement<T2>> predicate2)
 		{
 			if (predicate1 == null)
 			{
@@ -21,13 +21,14 @@ namespace TPLPipeline
 				predicate2 = e => true;
 			}
 
-			Input = new JoinBlock<IPipelineJobElement, IPipelineJobElement>();
-			Output = new ActionBlock<Tuple<IPipelineJobElement, IPipelineJobElement>>(
+			Input = new JoinBlock<IPipelineJobElement<T1>, IPipelineJobElement<T2>>();
+			Output = new ActionBlock<Tuple<IPipelineJobElement<T1>, IPipelineJobElement<T2>>>(
 				elements =>
 				{
 					var job = elements.Item1.Job;
-					job.MergeToSingleElement<T1, T2>(elements);
-					to.Post(elements.Item1);
+					var mergedElement = job.MergeToSingleElement(elements);
+					
+					to.Post(mergedElement);
 				});
 
 			from1.LinkTo(Input.Target1, predicate1);

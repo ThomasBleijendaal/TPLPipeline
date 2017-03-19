@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
@@ -11,26 +12,29 @@ namespace TPLPipeline.TestApp
 	{
 		public HttpClient HttpClient { get; set; } = new HttpClient();
 
-		TransformManyBlock<IPipelineJob, IPipelineJobElement> PipelineBegin;
-		TransformBlock<IPipelineJobElement, IPipelineJobElement> DownloadBlock;
-		TransformBlock<IEnumerable<IPipelineJobElement>, IPipelineJobElement> MergeBlock;
-		TransformBlock<IPipelineJobElement, IPipelineJobElement> DiskWriteBlock;
-		TransformBlock<IPipelineJobElement, IPipelineJobElement> ImageBlock;
-		ActionBlock<IPipelineJobElement> FinishBlock;
-		
+		TransformManyBlock<Job, IPipelineJobElement<string>> PipelineBegin;
+		TransformBlock<IPipelineJobElement<string>, IPipelineJobElement<byte[]>> DownloadBlock;
+		TransformBlock<IEnumerable<IPipelineJobElement<byte[]>>, IPipelineJobElement<byte[]>> MergeBlock;
+		TransformBlock<IPipelineJobElement<byte[]>, IPipelineJobElement<bool>> DiskWriteBlock;
+		TransformBlock<IPipelineJobElement<byte[]>, IPipelineJobElement<bool>> ImageBlock;
+		ActionBlock<IPipelineJobElement<Tuple<bool,bool>>> FinishBlock;
+
+		int delay = 0;
 		
 		public Pipeline()
 		{
-			PipelineBegin = PipelineBlockFactory.StartBlock();
+			PipelineBegin = PipelineBlockFactory.StartBlock<Job, string>();
 
-			DownloadBlock = TransformBlock<IJobElementStartData, byte[]>(
+			DownloadBlock = TransformBlock<string, byte[]>(
 				async (job, request) =>
 				{
-					await Task.Delay(1000);
+					//var data = await HttpClient.GetByteArrayAsync(request);
 
-					var data = await HttpClient.GetByteArrayAsync(request.Url);
-					
-					return data;
+					var data = " FJDKSLJF:KDSFJDSKLJF:KLDJSKJFLK:DSJJFKDSJF:JDSKJF:LKDSJLJF:DSKLJFL:KDSJLF:JDSL:JFDS";
+
+					await Task.Delay(delay += 50);
+
+					return Encoding.ASCII.GetBytes(data);
 				}, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 25 });
 
 			MergeBlock = MergeTransformBlock<byte[], byte[]>(
@@ -55,7 +59,7 @@ namespace TPLPipeline.TestApp
 
 					return mergedArray;
 				}, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 5 });
-			
+
 			DiskWriteBlock = TransformBlock<byte[], bool>(
 				async (job, data) =>
 				{
@@ -71,7 +75,7 @@ namespace TPLPipeline.TestApp
 			FinishBlock = ActionBlock<Tuple<bool, bool>>(
 				(job, flags) =>
 				{
-					if(flags.Item1)
+					if (flags.Item1)
 					{
 						Console.WriteLine("File successfull");
 					}
@@ -84,8 +88,8 @@ namespace TPLPipeline.TestApp
 
 			PipelineBegin.LinkTo(DownloadBlock);
 
-			DownloadBlock.LinkTo(MergeBlock, e => e.GetDataType(1) == typeof(Website));
-			DownloadBlock.LinkTo(ImageBlock, e => e.GetDataType(1) == typeof(Thumbnail));
+			DownloadBlock.LinkTo(MergeBlock, e => e.Properties["Type"] == "Website");
+			DownloadBlock.LinkTo(ImageBlock, e => e.Properties["Type"] == "Thumbnail");
 
 			MergeBlock.LinkTo(DiskWriteBlock);
 			

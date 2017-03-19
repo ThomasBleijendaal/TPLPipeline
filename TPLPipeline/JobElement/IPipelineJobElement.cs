@@ -1,24 +1,28 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace TPLPipeline
 {
-	public interface IPipelineJobElement
+	public interface IPipelineJobElement<T> : IJobElement
 	{
+		T GetData();
+		IPipelineJobElement<Tnew> SetData<Tnew>(Tnew value);
+	}
+
+	public interface IJobElement
+	{
+		List<string> Steps { get; }
+		Dictionary<string, string> Properties { get; }
+
 		IPipelineJob Job { get; }
-		int Element { get; }
+		int Nr { get; }
 
 		string CurrentStepName { get; }
 		string CompletedStepName { get; }
 
 		void BeginStep(string stepName);
 		void CompleteStep();
-
-		T GetData<T>();
-		Type GetDataType(int stepsBack);
-		void SetData<T>(T value);
-
 		void Disable();
 		bool Disabled { get; }
-
 	}
 }

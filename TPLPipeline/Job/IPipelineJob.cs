@@ -9,21 +9,22 @@ namespace TPLPipeline
 		string Id { get; }
 
 		void Complete(string stepName);
-		bool IsCompleted(string stepName);
-		bool IsCompleted(string stepName, Predicate<IPipelineJobElement> predicate);
-		
-		IEnumerable<IPipelineJobElement> MergeElements();
-		IEnumerable<IPipelineJobElement> MergeElements(Predicate<IPipelineJobElement> predicate);
-		IPipelineJobElement MergeToSingleElement(IEnumerable<IPipelineJobElement> elements);
-		IPipelineJobElement MergeToSingleElement<T1, T2>(Tuple<IPipelineJobElement, IPipelineJobElement> elements);
+		bool IsCompleted<T>(string stepName);
+		bool IsCompleted<T>(string stepName, Predicate<IPipelineJobElement<T>> predicate);
+
+		IEnumerable<IPipelineJobElement<T>> MergeElements<T>();
+		IEnumerable<IPipelineJobElement<T>> MergeElements<T>(Predicate<IPipelineJobElement<T>> predicate);
+		IPipelineJobElement<T> MergeToSingleElement<T>(IEnumerable<IPipelineJobElement<T>> elements);
+		IPipelineJobElement<Tuple<T1, T2>> MergeToSingleElement<T1, T2>(Tuple<IPipelineJobElement<T1>, IPipelineJobElement<T2>> elements);
 
 		void OnJobStart();
 		void OnJobComplete();
 
-		IEnumerable<IPipelineJobElement> Elements();
+		IEnumerable<IJobElement> Elements();
+		IEnumerable<IPipelineJobElement<T>> Elements<T>();
+		void UpdateElement(IJobElement newElement);
 
-		void AddData(object data);
-		void AddDataRange(IEnumerable<object> data);
+		void AddData<T>(T data, DataProperty[] properties = null);
 
 		Task<bool> Completion { get; }
 	}
