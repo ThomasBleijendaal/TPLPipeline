@@ -24,8 +24,6 @@ namespace TPLPipeline
 			{
 				_CurrentStepName = $"{_CurrentStepName}_{value}";
 
-				Console.WriteLine($"{Nr} {_CurrentStepName}");
-
 				Data = default(T);
 				Steps.Add(_CurrentStepName);
 			}

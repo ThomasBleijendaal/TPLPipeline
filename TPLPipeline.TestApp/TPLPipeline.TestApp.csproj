@@ -45,6 +45,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Implementation\Simple\Job.cs" />
+    <Compile Include="Implementation\Simple\Pipeline.cs" />
     <Compile Include="Logging\ILoggable.cs" />
     <Compile Include="Implementation\Job.cs" />
     <Compile Include="Logging\Logging.cs" />

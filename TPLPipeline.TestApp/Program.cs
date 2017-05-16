@@ -8,40 +8,33 @@ namespace TPLPipeline.TestApp
 	{
 		static void Main(string[] args)
 		{
-			var r = new Random();
-			var jobList = new List<Job>();
+			Task.Run(MainAsync).GetAwaiter().GetResult();
+		}
 
-			var pipeline = new Pipeline();
+		static async Task MainAsync()
+		{
+			var i = 0;
+			var c = 0;
+			object l = new object();
 
-			for (int l = 0; l < 1; l++)
 			{
-				var job = new Job();
+				var pipeline = new Implementation.Simple.Pipeline();
 
-				for (int i = 0; i < 5; i++)
+				i = 0;
+
+				while (++i <= 50)
 				{
-					job.AddData("http://thomas-ict.nl", new DataProperty[] { new DataProperty { Name = "Type", Value = "Website" } } );
+					var job = new Implementation.Simple.Job();
+
+					job.Completed += (sender, e) => { lock (l) { Console.WriteLine(++c); } };
+
+					//await pipeline.PostAsync(job);
+					pipeline.Post(job);
 				}
-				
-				job.AddData("http://thomas-ict.nl/logo-groot.png", new DataProperty[] { new DataProperty { Name = "Type", Value = "Thumbnail" } });
 
-				jobList.Add(job);
-			}
+				await Task.Run(async () => { while (c < 50) { await Task.Delay(100); } });
 
-			var tasks = new List<Task>();
-
-			foreach (var job in jobList)
-			{
-				tasks.Add(pipeline.PostAsync(job));
-			}
-
-			Task.WaitAll(tasks.ToArray());
-
-			foreach (var job in jobList)
-			{
-				foreach (var el in ((IPipelineJob)job).Elements())
-				{
-					Console.WriteLine($"TRACE: {el.Job.Id} {el.CompletedStepName} {(el.Disabled ? "MERGED" : "COMPLETED")}");
-				}
+				Console.WriteLine("*** Simple Done ***");
 			}
 
 			Console.WriteLine("*** Done ***");

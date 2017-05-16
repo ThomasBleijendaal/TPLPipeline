@@ -10,7 +10,12 @@ namespace TPLPipeline
 		private List<IJobElement> Elements = new List<IJobElement>();
 		private TaskCompletionSource<bool> CompletionTcs = new TaskCompletionSource<bool>();
 
+		// TODO: remove locks
 		private object MergeLock { get; set; } = new object();
+		private object CompletionLock { get; set; } = new object();
+
+		private bool Completed { get; set; } = false;
+
 		private bool Merged { get; set; }
 
 		public Task<bool> Completion => CompletionTcs.Task;
@@ -18,12 +23,14 @@ namespace TPLPipeline
 
 		bool IPipelineJob.IsCompleted<T>(string stepName)
 		{
+			Console.WriteLine("IsCompleted");
 			return Elements
 				?.Where(e => !e.Disabled && (e.CurrentStepName?.EndsWith(stepName) ?? false))
 				.All(e => e.CompletedStepName?.EndsWith(stepName) ?? false) ?? false;
 		}
 		bool IPipelineJob.IsCompleted<T>(string stepName, Predicate<IPipelineJobElement<T>> predicate)
 		{
+			Console.WriteLine("IsCompleted");
 			return ((IPipelineJob)this).Elements<T>()
 				?.Where(e => predicate(e) && !e.Disabled && (e.CurrentStepName?.EndsWith(stepName) ?? false))
 				.All(e => e.CompletedStepName?.EndsWith(stepName) ?? false) ?? false;
@@ -39,11 +46,18 @@ namespace TPLPipeline
 
 		void IPipelineJob.Complete(string stepName)
 		{
-			if (Elements.TrueForAll(e => e.Disabled || (e.CompletedStepName?.EndsWith(stepName) ?? false)))
-			{
-				CompletionTcs.TrySetResult(true);
-				OnJobComplete();
-			}
+			Console.WriteLine("Complete");
+			//lock (CompletionLock)
+			//{
+
+				if ((Elements.TrueForAll(e => e.Disabled || (e.CompletedStepName?.EndsWith(stepName) ?? false))) && !Completed)
+				{
+					Completed = true;
+
+					CompletionTcs.TrySetResult(true);
+					OnJobComplete();
+				}
+			//}
 		}
 
 		IEnumerable<IJobElement> IPipelineJob.Elements()
@@ -53,9 +67,11 @@ namespace TPLPipeline
 
 		IEnumerable<IPipelineJobElement<T>> IPipelineJob.Elements<T>()
 		{
-			if (Elements.TrueForAll(x => x as IPipelineJobElement<T> != null)) {
+			if (Elements.TrueForAll(x => x as IPipelineJobElement<T> != null))
+			{
 				return Elements.Select(x => x as IPipelineJobElement<T>);
-			} else
+			}
+			else
 			{
 				return null;
 			}
