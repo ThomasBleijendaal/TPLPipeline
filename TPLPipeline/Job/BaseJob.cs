@@ -20,13 +20,27 @@ namespace TPLPipeline
 
         bool IPipelineJob.IsCompleted(string stepName)
         {
-            return Elements.All(e => e.Disabled || !e.Disabled && (e.CurrentStepName.EndsWith(stepName)));
+            for (var i = 0; i < Elements.Count; i++)
+            {
+                if (!Elements[i].Disabled && !Elements[i].CurrentStepName.EndsWith(stepName))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
         bool IPipelineJob.IsCompleted<T>(string stepName, Predicate<IPipelineJobElement<T>> predicate)
         {
-            return ((IPipelineJob)this).Elements<T>()
-                ?.Where(e => predicate(e) && !e.Disabled && (e.CurrentStepName?.EndsWith(stepName) ?? false))
-                .All(e => e.CompletedStepName?.EndsWith(stepName) ?? false) ?? false;
+            for (var i = 0; i < Elements.Count; i++)
+            {
+                if (predicate(Elements[i] as IPipelineJobElement<T>) && !Elements[i].Disabled && !Elements[i].CurrentStepName.EndsWith(stepName))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         public abstract void OnJobStart();
