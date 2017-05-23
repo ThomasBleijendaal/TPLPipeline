@@ -39,17 +39,24 @@ namespace TPLPipeline
 
         void IPipelineJob.Complete(string stepName)
         {
-            if (Elements.TrueForAll(e => e.Disabled || (e.CompletedStepName?.EndsWith(stepName) ?? false)))
+            if (!_completed && (Elements.TrueForAll(e => e.Disabled || (e.CompletedStepName?.EndsWith(stepName) ?? false))))
             {
+                var thisThreadCompleted = false;
+
+                // TODO: remove lock
                 lock (_completedLock)
                 {
                     if (!_completed)
                     {
                         _completed = true;
-
-                        CompletionTcs.TrySetResult(true);
-                        OnJobComplete();
+                        thisThreadCompleted = true;
                     }
+                }
+
+                if (thisThreadCompleted)
+                {
+                    CompletionTcs.TrySetResult(true);
+                    OnJobComplete();
                 }
             }
         }
