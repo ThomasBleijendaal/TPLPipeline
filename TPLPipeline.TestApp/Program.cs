@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace TPLPipeline.TestApp
@@ -13,29 +15,41 @@ namespace TPLPipeline.TestApp
 
         static async Task MainAsync()
         {
+            var sw = new Stopwatch();
+            var result = new List<long>();
+
             var i = 0;
-            var c = 0;
-            object l = new object();
+            var n = 0;
 
+            var pipeline = new Implementation.Simple.Pipeline();
+            
+            do
             {
-                var pipeline = new Implementation.Simple.Pipeline();
-
                 i = 0;
 
-                while (++i <= 50)
+                sw.Start();
+
+                while (++i <= 5)
                 {
                     var job = new Implementation.Simple.Job();
 
-                    job.Completed += (sender, e) => { lock (l) { Console.WriteLine(++c); } };
+                    //job.Completed += (sender, e) => { Console.WriteLine(++c); };
 
-                    //await pipeline.PostAsync(job);
-                    pipeline.Post(job);
+                    await pipeline.PostAsync(job);
                 }
 
-                await Task.Run(async () => { while (c < 50) { await Task.Delay(100); } });
+                sw.Stop();
+                result.Add(sw.ElapsedMilliseconds);
+                sw.Reset();
 
-                Console.WriteLine("*** Simple Done ***");
+                Console.WriteLine(n);
             }
+            while (++n < 10);
+            
+            Console.WriteLine("*** Simple Done ***");
+            Console.WriteLine(result.Average());
+
+
 
             Console.WriteLine("*** Done ***");
             Console.ReadLine();

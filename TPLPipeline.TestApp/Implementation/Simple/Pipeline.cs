@@ -18,8 +18,8 @@ namespace TPLPipeline.TestApp.Implementation.Simple
             _start = StartBlock<string>();
             _finish = ActionBlock<string>(async (job, data) =>
             {
-                await Task.Delay(10); /*Console.WriteLine($"{job.Id} finish block");*/
-            }, true, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 4 });
+                await Task.Delay(100); /*Console.WriteLine($"{job.Id} finish block");*/
+            }, true, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 25 });
 
             _start.LinkTo(_finish);
         }
@@ -28,12 +28,8 @@ namespace TPLPipeline.TestApp.Implementation.Simple
         {
             //Console.WriteLine($"{job.Id} posting");
 
-            job.AddData(job.Id);
-            job.AddData(job.Id);
-            job.AddData(job.Id);
-            job.AddData(job.Id);
-            job.AddData(job.Id);
-            job.AddData(job.Id);
+            for(var i = 0; i < 100; ++i)
+                job.AddData(job.Id);
 
             _start.Post(job);
         }
@@ -42,12 +38,8 @@ namespace TPLPipeline.TestApp.Implementation.Simple
         {
             //Console.WriteLine($"{job.Id} posting async");
 
-            job.AddData(job.Id);
-            job.AddData(job.Id);
-            job.AddData(job.Id);
-            job.AddData(job.Id);
-            job.AddData(job.Id);
-            job.AddData(job.Id);
+            for (var i = 0; i < 100; ++i)
+                job.AddData(job.Id);
 
             _start.Post(job);
 

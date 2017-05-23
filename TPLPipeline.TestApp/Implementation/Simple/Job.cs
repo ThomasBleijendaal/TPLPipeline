@@ -16,7 +16,10 @@ namespace TPLPipeline.TestApp.Implementation.Simple
         {
             //Console.WriteLine($"{this.Id} completed");
 
-            Completed.Invoke(this, null);
+            if (Completed != null)
+            {
+                Completed.Invoke(this, null);
+            }
         }
 
         public override void OnJobStart()
