@@ -6,22 +6,22 @@ using System.Threading.Tasks;
 
 namespace TPLPipeline.TestApp.Implementation.Simple
 {
-	public delegate void Completed(object sender, EventArgs e);
-	
-	class Job : BaseJob
-	{
-		public event Completed Completed;
+    public delegate void Completed(object sender, EventArgs e);
 
-		public override void OnJobComplete()
-		{
-			//Console.WriteLine($"{this.Id} completed");
+    class Job : BaseJob
+    {
+        public event Completed Completed;
 
-			Completed.Invoke(this, null);
-		}
+        public override void OnJobComplete()
+        {
+            //Console.WriteLine($"{this.Id} completed");
 
-		public override void OnJobStart()
-		{
-			//Console.WriteLine($"{this.Id} started");
-		}
-	}
+            Completed.Invoke(this, null);
+        }
+
+        public override void OnJobStart()
+        {
+            //Console.WriteLine($"{this.Id} started");
+        }
+    }
 }

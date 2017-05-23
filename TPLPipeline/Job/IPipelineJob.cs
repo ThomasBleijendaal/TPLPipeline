@@ -9,7 +9,7 @@ namespace TPLPipeline
 		string Id { get; }
 
 		void Complete(string stepName);
-		bool IsCompleted<T>(string stepName);
+		bool IsCompleted(string stepName);
 		bool IsCompleted<T>(string stepName, Predicate<IPipelineJobElement<T>> predicate);
 
 		IEnumerable<IPipelineJobElement<T>> MergeElements<T>();

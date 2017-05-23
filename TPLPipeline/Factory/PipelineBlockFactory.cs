@@ -6,245 +6,221 @@ using System.Threading.Tasks.Dataflow;
 
 namespace TPLPipeline
 {
-	public static class PipelineBlockFactory
-	{
-		public static string NewBlockName()
-		{
-			return Guid.NewGuid().ToString();
-		}
+    public static class PipelineBlockFactory
+    {
+        public static string NewBlockName()
+        {
+            return Guid.NewGuid().ToString();
+        }
 
-		public static TransformManyBlock<Tjob, IPipelineJobElement<Tout>> StartBlock<Tjob, Tout>()
-			where Tjob : IPipelineJob
-		{
-			return new TransformManyBlock<Tjob, IPipelineJobElement<Tout>>(
-				job =>
-				{
-					job.OnJobStart();
-					
-					return job.Elements<Tout>();
-				});
-		}
+        public static TransformManyBlock<Tjob, IPipelineJobElement<Tout>> StartBlock<Tjob, Tout>()
+            where Tjob : IPipelineJob
+        {
+            return new TransformManyBlock<Tjob, IPipelineJobElement<Tout>>(
+                job =>
+                {
+                    job.OnJobStart();
 
-		public static TransformBlock<IPipelineJobElement<Tin>, IPipelineJobElement<Tout>> TransformBlock<Tjob, Tin, Tout>(Func<Tjob, Tin, Tout> action, ExecutionDataflowBlockOptions options = null)
-			where Tjob : IPipelineJob
-		{
-			var blockName = NewBlockName();
+                    return job.Elements<Tout>();
+                });
+        }
 
-			return new TransformBlock<IPipelineJobElement<Tin>, IPipelineJobElement<Tout>>(
-				element =>
-				{
-					var job = (Tjob)element.Job;
-					var data = element.GetData();
+        public static TransformBlock<IPipelineJobElement<Tin>, IPipelineJobElement<Tout>> TransformBlock<Tjob, Tin, Tout>(Func<Tjob, Tin, Tout> action, ExecutionDataflowBlockOptions options = null)
+            where Tjob : IPipelineJob
+        {
+            var blockName = NewBlockName();
 
-					element.BeginStep(blockName);
+            return new TransformBlock<IPipelineJobElement<Tin>, IPipelineJobElement<Tout>>(
+                element =>
+                {
+                    var job = (Tjob)element.Job;
+                    var data = element.GetData();
 
-					var newElement = element.SetData(action(job,data));
-					newElement.CompleteStep();
+                    element.BeginStep(blockName);
 
-					return newElement;
-				}, options ?? new ExecutionDataflowBlockOptions());
-		}
+                    var newElement = element.SetData(action(job, data));
+                    newElement.CompleteStep();
 
-		public static TransformBlock<IPipelineJobElement<Tin>, IPipelineJobElement<Tout>> TransformBlock<Tjob, Tin, Tout>(Func<Tjob, Tin, Task<Tout>> action, ExecutionDataflowBlockOptions options = null)
-			where Tjob : IPipelineJob
-		{
-			var blockName = NewBlockName();
+                    return newElement;
+                }, options ?? new ExecutionDataflowBlockOptions());
+        }
 
-			return new TransformBlock<IPipelineJobElement<Tin>, IPipelineJobElement<Tout>>(
-				async element =>
-				{
-					var job = (Tjob)element.Job;
-					var data = element.GetData();
+        public static TransformBlock<IPipelineJobElement<Tin>, IPipelineJobElement<Tout>> TransformBlock<Tjob, Tin, Tout>(Func<Tjob, Tin, Task<Tout>> action, ExecutionDataflowBlockOptions options = null)
+            where Tjob : IPipelineJob
+        {
+            var blockName = NewBlockName();
 
-					element.BeginStep(blockName);
+            return new TransformBlock<IPipelineJobElement<Tin>, IPipelineJobElement<Tout>>(
+                async element =>
+                {
+                    var job = (Tjob)element.Job;
+                    var data = element.GetData();
 
-					var newElement = element.SetData(await action(job, data));
-					newElement.CompleteStep();
+                    element.BeginStep(blockName);
 
-					return newElement;
-				}, options ?? new ExecutionDataflowBlockOptions());
-		}
+                    var newElement = element.SetData(await action(job, data));
+                    newElement.CompleteStep();
 
-		public static TransformBlock<IEnumerable<IPipelineJobElement<Tin>>, IPipelineJobElement<Tout>> MergeTransformBlock<Tjob, Tin, Tout>(Func<Tjob, IEnumerable<Tin>, Tout> action, ExecutionDataflowBlockOptions options = null)
-			where Tjob : IPipelineJob
-		{
-			var blockName = NewBlockName();
+                    return newElement;
+                }, options ?? new ExecutionDataflowBlockOptions());
+        }
 
-			return new TransformBlock<IEnumerable<IPipelineJobElement<Tin>>, IPipelineJobElement<Tout>>(
-				elements =>
-				{
-					var job = elements.GetJob<Tjob>();
-					var data = elements.GetData();
+        public static TransformBlock<IEnumerable<IPipelineJobElement<Tin>>, IPipelineJobElement<Tout>> MergeTransformBlock<Tjob, Tin, Tout>(Func<Tjob, IEnumerable<Tin>, Tout> action, ExecutionDataflowBlockOptions options = null)
+            where Tjob : IPipelineJob
+        {
+            var blockName = NewBlockName();
 
-					foreach (var element in elements)
-					{
-						element.BeginStep(blockName);
-					}
+            return new TransformBlock<IEnumerable<IPipelineJobElement<Tin>>, IPipelineJobElement<Tout>>(
+                elements =>
+                {
+                    var job = elements.GetJob<Tjob>();
+                    var data = elements.GetData();
 
-					var newData = action(job, data);
+                    foreach (var element in elements)
+                    {
+                        element.BeginStep(blockName);
+                    }
 
-					var mergedElement = job.MergeToSingleElement(elements);
-					var newElement = mergedElement.SetData(newData);
-					
-					newElement.CompleteStep();
+                    var newData = action(job, data);
 
-					return newElement;
-				}, options ?? new ExecutionDataflowBlockOptions());
-		}
+                    var mergedElement = job.MergeToSingleElement(elements);
+                    var newElement = mergedElement.SetData(newData);
 
-		public static TransformBlock<IEnumerable<IPipelineJobElement<Tin>>, IPipelineJobElement<Tout>> MergeTransformBlock<Tjob, Tin, Tout>(Func<Tjob, IEnumerable<Tin>, Task<Tout>> action, ExecutionDataflowBlockOptions options = null)
-			where Tjob : IPipelineJob
-		{
-			var blockName = NewBlockName();
+                    newElement.CompleteStep();
 
-			return new TransformBlock<IEnumerable<IPipelineJobElement<Tin>>, IPipelineJobElement<Tout>>(
-				async elements =>
-				{
-					var job = elements.GetJob<Tjob>();
-					var data = elements.GetData();
+                    return newElement;
+                }, options ?? new ExecutionDataflowBlockOptions());
+        }
 
-					foreach (var element in elements)
-					{
-						element.BeginStep(blockName);
-					}
+        public static TransformBlock<IEnumerable<IPipelineJobElement<Tin>>, IPipelineJobElement<Tout>> MergeTransformBlock<Tjob, Tin, Tout>(Func<Tjob, IEnumerable<Tin>, Task<Tout>> action, ExecutionDataflowBlockOptions options = null)
+            where Tjob : IPipelineJob
+        {
+            var blockName = NewBlockName();
 
-					var newData = await action(job, data);
+            return new TransformBlock<IEnumerable<IPipelineJobElement<Tin>>, IPipelineJobElement<Tout>>(
+                async elements =>
+                {
+                    var job = elements.GetJob<Tjob>();
+                    var data = elements.GetData();
 
-					var mergedElement = job.MergeToSingleElement(elements);
-					var newElement = mergedElement.SetData(newData);
+                    foreach (var element in elements)
+                    {
+                        element.BeginStep(blockName);
+                    }
 
-					newElement.CompleteStep();
+                    var newData = await action(job, data);
 
-					return newElement;
-				}, options ?? new ExecutionDataflowBlockOptions());
-		}
+                    var mergedElement = job.MergeToSingleElement(elements);
+                    var newElement = mergedElement.SetData(newData);
 
-		public static ActionBlock<IPipelineJobElement<Tin>> ActionBlock<Tjob, Tin>(Action<Tjob, Tin> action, bool isLastStep = false, ExecutionDataflowBlockOptions options = null)
-			where Tjob : IPipelineJob
-		{
-			var blockName = NewBlockName();
+                    newElement.CompleteStep();
 
-			return new ActionBlock<IPipelineJobElement<Tin>>(
-				element =>
-				{
-					var job = (Tjob)element.Job;
-					var data = element.GetData();
+                    return newElement;
+                }, options ?? new ExecutionDataflowBlockOptions());
+        }
 
-					element.BeginStep(blockName);
-					action(job, data);
-					element.CompleteStep();
+        public static ActionBlock<IPipelineJobElement<Tin>> ActionBlock<Tjob, Tin>(Action<Tjob, Tin> action, bool isLastStep = false, ExecutionDataflowBlockOptions options = null)
+            where Tjob : IPipelineJob
+        {
+            var blockName = NewBlockName();
 
-					if(isLastStep && job.IsCompleted<Tin>(element.CurrentStepName))
-					{
-						job.Complete(element.CurrentStepName);
-					}
-				}, options ?? new ExecutionDataflowBlockOptions());
-		}
+            return new ActionBlock<IPipelineJobElement<Tin>>(
+                element =>
+                {
+                    var job = (Tjob)element.Job;
+                    var data = element.GetData();
 
-		public static ActionBlock<IPipelineJobElement<Tin>> ActionBlock<Tjob, Tin>(Func<Tjob, Tin, Task> action, bool isLastStep = false, ExecutionDataflowBlockOptions options = null)
-			where Tjob : IPipelineJob
-		{
-			var blockName = NewBlockName();
+                    element.BeginStep(blockName);
+                    action(job, data);
+                    element.CompleteStep(isLastStep);
+                }, options ?? new ExecutionDataflowBlockOptions());
+        }
 
-			return new ActionBlock<IPipelineJobElement<Tin>>(
-				async element =>
-				{
-					var job = (Tjob)element.Job;
-					var data = element.GetData();
+        public static ActionBlock<IPipelineJobElement<Tin>> ActionBlock<Tjob, Tin>(Func<Tjob, Tin, Task> action, bool isLastStep = false, ExecutionDataflowBlockOptions options = null)
+            where Tjob : IPipelineJob
+        {
+            var blockName = NewBlockName();
 
-					element.BeginStep(blockName);
-					await action(job, data);
-					element.CompleteStep();
+            return new ActionBlock<IPipelineJobElement<Tin>>(
+                async element =>
+                {
+                    var job = (Tjob)element.Job;
+                    var data = element.GetData();
 
-					if (isLastStep && job.IsCompleted<Tin>(element.CurrentStepName))
-					{
-						job.Complete(element.CurrentStepName);
-					}
-				}, options ?? new ExecutionDataflowBlockOptions());
-		}
+                    element.BeginStep(blockName);
+                    await action(job, data);
+                    element.CompleteStep(isLastStep);
+                }, options ?? new ExecutionDataflowBlockOptions());
+        }
 
-		public static ActionBlock<IEnumerable<IPipelineJobElement<Tin>>> MergeActionBlock<Tjob, Tin>(Action<Tjob, IEnumerable<Tin>> action, bool isLastStep = false, ExecutionDataflowBlockOptions options = null)
-			where Tjob : IPipelineJob
-		{
-			var blockName = NewBlockName();
+        public static ActionBlock<IEnumerable<IPipelineJobElement<Tin>>> MergeActionBlock<Tjob, Tin>(Action<Tjob, IEnumerable<Tin>> action, bool isLastStep = false, ExecutionDataflowBlockOptions options = null)
+            where Tjob : IPipelineJob
+        {
+            var blockName = NewBlockName();
 
-			return new ActionBlock<IEnumerable<IPipelineJobElement<Tin>>>(
-				elements =>
-				{
-					var job = elements.GetJob<Tjob>();
-					var data = elements.GetData();
+            return new ActionBlock<IEnumerable<IPipelineJobElement<Tin>>>(
+                elements =>
+                {
+                    var job = elements.GetJob<Tjob>();
+                    var data = elements.GetData();
 
-					foreach (var element in elements)
-					{
-						element.BeginStep(blockName);
-					}
+                    foreach (var element in elements)
+                    {
+                        element.BeginStep(blockName);
+                    }
 
-					action(job, data);
-					
-					foreach (var element in elements)
-					{
-						element.CompleteStep();
-					}
+                    action(job, data);
 
-					var firstItem = elements.First();
+                    foreach (var element in elements)
+                    {
+                        element.CompleteStep(isLastStep);
+                    }
+                }, options ?? new ExecutionDataflowBlockOptions());
+        }
 
-					if (isLastStep && job.IsCompleted<Tin>(firstItem.CurrentStepName))
-					{
-						job.Complete(firstItem.CurrentStepName);
-					}
-				}, options ?? new ExecutionDataflowBlockOptions());
-		}
+        public static ActionBlock<IEnumerable<IPipelineJobElement<Tin>>> MergeActionBlock<Tjob, Tin>(Func<Tjob, IEnumerable<Tin>, Task> action, bool isLastStep = false, ExecutionDataflowBlockOptions options = null)
+            where Tjob : IPipelineJob
+        {
+            var blockName = NewBlockName();
 
-		public static ActionBlock<IEnumerable<IPipelineJobElement<Tin>>> MergeActionBlock<Tjob, Tin>(Func<Tjob, IEnumerable<Tin>, Task> action, bool isLastStep = false, ExecutionDataflowBlockOptions options = null)
-			where Tjob : IPipelineJob
-		{
-			var blockName = NewBlockName();
+            return new ActionBlock<IEnumerable<IPipelineJobElement<Tin>>>(
+                async elements =>
+                {
+                    var job = elements.GetJob<Tjob>();
+                    var data = elements.GetData();
 
-			return new ActionBlock<IEnumerable<IPipelineJobElement<Tin>>>(
-				async elements =>
-				{
-					var job = elements.GetJob<Tjob>();
-					var data = elements.GetData();
+                    foreach (var element in elements)
+                    {
+                        element.BeginStep(blockName);
+                    }
 
-					foreach (var element in elements)
-					{
-						element.BeginStep(blockName);
-					}
+                    await action(job, data);
 
-					await action(job, data);
+                    foreach (var element in elements)
+                    {
+                        element.CompleteStep(isLastStep);
+                    }
+                }, options ?? new ExecutionDataflowBlockOptions());
+        }
 
-					foreach (var element in elements)
-					{
-						element.CompleteStep();
-					}
+        public static void LinkTo<T>(this ISourceBlock<IPipelineJobElement<T>> element, ITargetBlock<IEnumerable<IPipelineJobElement<T>>> target)
+        {
+            new PipelineBatchLinker<T>(element, target);
+        }
 
-					var firstItem = elements.First();
+        public static void LinkTo<T>(this ISourceBlock<IPipelineJobElement<T>> element, ITargetBlock<IEnumerable<IPipelineJobElement<T>>> target, Predicate<IPipelineJobElement<T>> predicate)
+        {
+            new PipelineBatchLinker<T>(element, target, predicate);
+        }
 
-					if (isLastStep && job.IsCompleted<Tin>(firstItem.CurrentStepName))
-					{
-						job.Complete(firstItem.CurrentStepName);
-					}
-				}, options ?? new ExecutionDataflowBlockOptions());
-		}
+        public static void LinkFrom<T1, T2>(this ITargetBlock<IPipelineJobElement<Tuple<T1, T2>>> element, ISourceBlock<IPipelineJobElement<T1>> from1, ISourceBlock<IPipelineJobElement<T2>> from2)
+        {
+            new PipelineMergeLinker<T1, T2>(from1, from2, element);
+        }
 
-		public static void LinkTo<T>(this ISourceBlock<IPipelineJobElement<T>> element, ITargetBlock<IEnumerable<IPipelineJobElement<T>>> target)
-		{
-			new PipelineBatchLinker<T>(element, target);
-		}
-
-		public static void LinkTo<T>(this ISourceBlock<IPipelineJobElement<T>> element, ITargetBlock<IEnumerable<IPipelineJobElement<T>>> target, Predicate<IPipelineJobElement<T>> predicate)
-		{
-			new PipelineBatchLinker<T>(element, target, predicate);
-		}
-
-		public static void LinkFrom<T1, T2>(this ITargetBlock<IPipelineJobElement<Tuple<T1,T2>>> element, ISourceBlock<IPipelineJobElement<T1>> from1, ISourceBlock<IPipelineJobElement<T2>> from2)
-		{
-			new PipelineMergeLinker<T1, T2>(from1, from2, element);
-		}
-
-		public static void LinkFrom<T1, T2>(this ITargetBlock<IPipelineJobElement<Tuple<T1, T2>>> element, ISourceBlock<IPipelineJobElement<T1>> from1, ISourceBlock<IPipelineJobElement<T2>> from2, Predicate<IPipelineJobElement<T1>> predicate1, Predicate<IPipelineJobElement<T2>> predicate2)
-		{
-			new PipelineMergeLinker<T1, T2>(from1, from2, element, predicate1, predicate2);
-		}
-	}
+        public static void LinkFrom<T1, T2>(this ITargetBlock<IPipelineJobElement<Tuple<T1, T2>>> element, ISourceBlock<IPipelineJobElement<T1>> from1, ISourceBlock<IPipelineJobElement<T2>> from2, Predicate<IPipelineJobElement<T1>> predicate1, Predicate<IPipelineJobElement<T2>> predicate2)
+        {
+            new PipelineMergeLinker<T1, T2>(from1, from2, element, predicate1, predicate2);
+        }
+    }
 }

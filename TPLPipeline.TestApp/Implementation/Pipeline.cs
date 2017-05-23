@@ -8,124 +8,124 @@ using System.Threading.Tasks.Dataflow;
 
 namespace TPLPipeline.TestApp
 {
-	public class Pipeline : BasePipeline<Job>
-	{
-		public HttpClient HttpClient { get; set; } = new HttpClient();
+    public class Pipeline : BasePipeline<Job>
+    {
+        public HttpClient HttpClient { get; set; } = new HttpClient();
 
-		TransformManyBlock<Job, IPipelineJobElement<string>> PipelineBegin;
-		TransformBlock<IPipelineJobElement<string>, IPipelineJobElement<byte[]>> DownloadBlock;
-		TransformBlock<IEnumerable<IPipelineJobElement<byte[]>>, IPipelineJobElement<byte[]>> MergeBlock;
-		TransformBlock<IPipelineJobElement<byte[]>, IPipelineJobElement<bool>> DiskWriteBlock;
-		TransformBlock<IPipelineJobElement<byte[]>, IPipelineJobElement<bool>> ImageBlock;
-		ActionBlock<IPipelineJobElement<Tuple<bool,bool>>> FinishBlock;
+        TransformManyBlock<Job, IPipelineJobElement<string>> PipelineBegin;
+        TransformBlock<IPipelineJobElement<string>, IPipelineJobElement<byte[]>> DownloadBlock;
+        TransformBlock<IEnumerable<IPipelineJobElement<byte[]>>, IPipelineJobElement<byte[]>> MergeBlock;
+        TransformBlock<IPipelineJobElement<byte[]>, IPipelineJobElement<bool>> DiskWriteBlock;
+        TransformBlock<IPipelineJobElement<byte[]>, IPipelineJobElement<bool>> ImageBlock;
+        ActionBlock<IPipelineJobElement<Tuple<bool, bool>>> FinishBlock;
 
-		int delay = 0;
-		
-		public Pipeline()
-		{
-			PipelineBegin = StartBlock<string>();
+        int delay = 0;
 
-			DownloadBlock = TransformBlock<string, byte[]>(
-				async (job, request) =>
-				{
-					//var data = await HttpClient.GetByteArrayAsync(request);
+        public Pipeline()
+        {
+            PipelineBegin = StartBlock<string>();
 
-					var data = " FJDKSLJF:KDSFJDSKLJF:KLDJSKJFLK:DSJJFKDSJF:JDSKJF:LKDSJLJF:DSKLJFL:KDSJLF:JDSL:JFDS";
+            DownloadBlock = TransformBlock<string, byte[]>(
+                async (job, request) =>
+                {
+                    //var data = await HttpClient.GetByteArrayAsync(request);
 
-					await Task.Delay(delay += 50);
+                    var data = " FJDKSLJF:KDSFJDSKLJF:KLDJSKJFLK:DSJJFKDSJF:JDSKJF:LKDSJLJF:DSKLJFL:KDSJLF:JDSL:JFDS";
 
-					return Encoding.ASCII.GetBytes(data);
-				}, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 25 });
+                    await Task.Delay(delay += 50);
 
-			MergeBlock = MergeTransformBlock<byte[], byte[]>(
-				(job, byteArrays) =>
-				{
-					var length = 0;
+                    return Encoding.ASCII.GetBytes(data);
+                }, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 25 });
 
-					foreach (var byteArray in byteArrays)
-					{
-						length += byteArray.Length;
-					}
+            MergeBlock = MergeTransformBlock<byte[], byte[]>(
+                (job, byteArrays) =>
+                {
+                    var length = 0;
 
-					var mergedArray = new byte[length];
-					var index = 0;
+                    foreach (var byteArray in byteArrays)
+                    {
+                        length += byteArray.Length;
+                    }
 
-					foreach (var byteArray in byteArrays)
-					{
-						byteArray.CopyTo(mergedArray, index);
+                    var mergedArray = new byte[length];
+                    var index = 0;
 
-						index += byteArray.Length;
-					}
+                    foreach (var byteArray in byteArrays)
+                    {
+                        byteArray.CopyTo(mergedArray, index);
 
-					return mergedArray;
-				}, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 5 });
+                        index += byteArray.Length;
+                    }
 
-			DiskWriteBlock = TransformBlock<byte[], bool>(
-				async (job, data) =>
-				{
-					return await WriteToFile(job.FileName, data);
-				}, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 1 });
+                    return mergedArray;
+                }, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 5 });
 
-			ImageBlock = TransformBlock<byte[], bool>(
-				async (job, data) =>
-				{
-					return await WriteToFile(job.FileName + ".png", data);
-				}, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 1 });
+            DiskWriteBlock = TransformBlock<byte[], bool>(
+                async (job, data) =>
+                {
+                    return await WriteToFile(job.FileName, data);
+                }, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 1 });
 
-			FinishBlock = ActionBlock<Tuple<bool, bool>>(
-				(job, flags) =>
-				{
-					if (flags.Item1)
-					{
-						Console.WriteLine("File successfull");
-					}
+            ImageBlock = TransformBlock<byte[], bool>(
+                async (job, data) =>
+                {
+                    return await WriteToFile(job.FileName + ".png", data);
+                }, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 1 });
 
-					if (flags.Item2)
-					{
-						Console.WriteLine("Image successfull");
-					}
-				}, true);
+            FinishBlock = ActionBlock<Tuple<bool, bool>>(
+                (job, flags) =>
+                {
+                    if (flags.Item1)
+                    {
+                        Console.WriteLine("File successfull");
+                    }
 
-			PipelineBegin.LinkTo(DownloadBlock);
+                    if (flags.Item2)
+                    {
+                        Console.WriteLine("Image successfull");
+                    }
+                }, true);
 
-			DownloadBlock.LinkTo(MergeBlock, e => e.Properties["Type"] == "Website");
-			DownloadBlock.LinkTo(ImageBlock, e => e.Properties["Type"] == "Thumbnail");
+            PipelineBegin.LinkTo(DownloadBlock);
 
-			MergeBlock.LinkTo(DiskWriteBlock);
-			
-			FinishBlock.LinkFrom(DiskWriteBlock, ImageBlock);
-		}
-		public override void Post(Job job)
-		{
-			PipelineBegin.Post(job);
-		}
+            DownloadBlock.LinkTo(MergeBlock, e => e.Properties["Type"] == "Website");
+            DownloadBlock.LinkTo(ImageBlock, e => e.Properties["Type"] == "Thumbnail");
 
-		public override Task PostAsync(Job job)
-		{
-			PipelineBegin.Post(job);
-			return job.Completion;
-		}
+            MergeBlock.LinkTo(DiskWriteBlock);
 
-		private async Task<bool> WriteToFile(string fileName, byte[] data)
-		{
-			var directory = Path.GetDirectoryName(fileName);
+            FinishBlock.LinkFrom(DiskWriteBlock, ImageBlock);
+        }
+        public override void Post(Job job)
+        {
+            PipelineBegin.Post(job);
+        }
 
-			if (!Directory.Exists(directory))
-			{
-				Directory.CreateDirectory(directory);
-			}
+        public override Task PostAsync(Job job)
+        {
+            PipelineBegin.Post(job);
+            return job.Completion;
+        }
 
-			if (File.Exists(fileName))
-			{
-				File.Delete(fileName);
-			}
+        private async Task<bool> WriteToFile(string fileName, byte[] data)
+        {
+            var directory = Path.GetDirectoryName(fileName);
 
-			var fileHandle = File.OpenWrite(fileName);
-			await fileHandle.WriteAsync(data, 0, data.Length);
-			await Task.Delay(1000);
-			fileHandle.Close();
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
 
-			return true;
-		}
-	}
+            if (File.Exists(fileName))
+            {
+                File.Delete(fileName);
+            }
+
+            var fileHandle = File.OpenWrite(fileName);
+            await fileHandle.WriteAsync(data, 0, data.Length);
+            await Task.Delay(1000);
+            fileHandle.Close();
+
+            return true;
+        }
+    }
 }
